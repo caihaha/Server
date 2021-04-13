@@ -57,7 +57,7 @@ int main()
 	while (true)
 	{
 		// 5 接受客户端数据
-		int recvLen = recv(_sock, recvBuff, 128, 0);
+		int recvLen = recv(_cSock, recvBuff, 128, 0);
 		if (recvLen <= 0)
 		{
 			printf("client exit\n");
