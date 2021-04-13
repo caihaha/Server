@@ -15,7 +15,7 @@ int main()
 	// TODO 编写网络编程代码
 	// 1 建立一个socket 返回unit *
 	SOCKET _sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	// 2 绑定端口号
+	// 2 绑定端口号 bind
 	sockaddr_in _sin = {};
 	_sin.sin_family = AF_INET;
 	_sin.sin_port = htons(4567); // host to net unsigned shot

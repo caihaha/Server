@@ -12,6 +12,17 @@ int main()
 	WSADATA data;
 	WSAStartup(ver, &data); // 启动socket
 	// TODO 编写网络编程代码
+	// 1 建立一个Socket
+	SOCKET _sock = socket(AF_INET, SOCK_STREAM, 0);
+	// 2 连接服务端 connect
+	sockaddr_in _sin = {};
+	_sin.sin_family = AF_INET;
+	_sin.sin_port = htons(4567);
+	_sin.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+	if (connect(_sock, (sockaddr *)&_sin, sizeof(_sin)) == SOCKET_ERROR)
+	{
+
+	}
 
 	WSACleanup(); // 和WSAStartup匹配
 	return 0;
