@@ -40,6 +40,7 @@ int main()
 		scanf_s("%s", cmdBuf);
 		if (0 == strcmp(cmdBuf, "exit"))
 		{
+			printf("printf 'exit' cmd");
 			break;
 		}
 		else
@@ -64,6 +65,7 @@ int main()
 	closesocket(_sock);
 
 	WSACleanup(); // ∫ÕWSAStartup∆•≈‰
+	printf("client exit");
 	getchar();
 	return 0;
 }

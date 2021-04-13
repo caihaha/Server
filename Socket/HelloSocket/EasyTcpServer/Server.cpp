@@ -84,5 +84,7 @@ int main()
 	closesocket(_sock);
 
 	WSACleanup(); // ∫ÕWSAStartup∆•≈‰
+	printf("server exit");
+	getchar();
 	return 0;
 }
