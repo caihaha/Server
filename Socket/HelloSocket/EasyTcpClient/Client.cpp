@@ -1,4 +1,5 @@
 #define WIN32_LEAN_AND_MEAN
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #include <WinSock2.h>
 #include <windows.h>
@@ -27,7 +28,12 @@ int main()
 	{
 		printf("connect error");
 	}
-	// 3接受服务器信息 recv
+	// 3 接受服务器信息 recv
+	char recvBuff[256] = {};
+	recv(_sock, recvBuff, 256, 0);
+	// 4 断开连接 closesocket
+	closesocket(_sock);
+
 	WSACleanup(); // 和WSAStartup匹配
 	return 0;
 }
