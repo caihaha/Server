@@ -32,18 +32,35 @@ int main()
 	{
 		printf("connect success\n");
 	}
-	// 3 接受服务器信息 recv
-	char recvBuff[256] = {};
-	int recvLen = recv(_sock, recvBuff, 256, 0);
-	if (recvLen <= 0)
+
+	char cmdBuf[128] = {};
+	while (true)
 	{
-		printf("recv error\n");
+		// 3 向服务器发送数据
+		scanf_s("%s", cmdBuf);
+		if (0 == strcmp(cmdBuf, "exit"))
+		{
+			break;
+		}
+		else
+		{
+			send(_sock, cmdBuf, strlen(cmdBuf + 1), 0);
+		}
+
+		// 5 接受服务器信息 recv
+		char recvBuf[256] = {};
+		int recvLen = recv(_sock, recvBuf, 256, 0);
+		if (recvLen <= 0)
+		{
+			printf("recv error\n");
+		}
+		else
+		{
+			printf("recv datas : %s \n", recvBuf);
+		}
 	}
-	else
-	{
-		printf("recv datas : %s \n", recvBuff);
-	}
-	// 4 断开连接 closesocket
+	
+	// 5 断开连接 closesocket
 	closesocket(_sock);
 
 	WSACleanup(); // 和WSAStartup匹配

@@ -4,6 +4,7 @@
 #include <WinSock2.h>
 #include <windows.h>
 #include <stdio.h>
+#include <cstring>
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -41,20 +42,45 @@ int main()
 	sockaddr_in clientAddr = {};
 	int nAddrLen = sizeof(sockaddr_in);
 	SOCKET _cSock = INVALID_SOCKET;
-	const char msgBuf[] = "Hello, I'm Server.";
+	
+	_cSock = accept(_sock, (sockaddr*)&clientAddr, &nAddrLen);
+	if (INVALID_SOCKET == _cSock)
+	{
+		printf("client socket invalid\n");
+	}
+	else
+	{
+		printf("accept client IP = %s\n", inet_ntoa(clientAddr.sin_addr));
+	}
+	char recvBuff[128] = {};
+	char msgBuf[] = "";
 	while (true)
 	{
-		_cSock = accept(_sock, (sockaddr*)&clientAddr, &nAddrLen);
-		if (INVALID_SOCKET == _cSock)
+		// 5 接受客户端数据
+		int recvLen = recv(_sock, recvBuff, 128, 0);
+		if (recvLen <= 0)
 		{
-			printf("client socket invalid\n");
+			printf("client exit\n");
+			break;
 		}
-		printf("accept client IP = %s \n", inet_ntoa(clientAddr.sin_addr));
-		// 5 send 向客户端发送数据
+		// 6 处理请求
+		if (0 == strcmp(recvBuff, "getName"))
+		{
+			strcpy_s(msgBuf, "I'm CJC.");
+		}
+		else if (0 == strcmp(recvBuff, "getAge"))
+		{
+			strcpy_s(msgBuf, "25");
+		}
+		else
+		{
+			strcpy_s(msgBuf, "???");
+		}
+		// send 向客户端发送数据
 		send(_cSock, msgBuf, strlen(msgBuf) + 1, 0);
 	}
 	
-	// 6 关闭套接字closesocket;
+	// 关闭套接字closesocket;
 	closesocket(_sock);
 
 	WSACleanup(); // 和WSAStartup匹配
