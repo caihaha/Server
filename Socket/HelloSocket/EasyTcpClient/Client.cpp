@@ -4,6 +4,7 @@
 #include <WinSock2.h>
 #include <windows.h>
 #include <stdio.h>
+#include <iostream>
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -33,11 +34,11 @@ int main()
 		printf("connect success\n");
 	}
 
-	char cmdBuf[128] = {};
 	while (true)
 	{
 		// 3 向服务器发送数据
-		scanf_s("%s", cmdBuf);
+		char cmdBuf[128] = {"123"};
+
 		if (0 == strcmp(cmdBuf, "exit"))
 		{
 			printf("printf 'exit' cmd");
@@ -45,7 +46,7 @@ int main()
 		}
 		else
 		{
-			send(_sock, cmdBuf, strlen(cmdBuf + 1), 0);
+			send(_sock, cmdBuf, strlen(cmdBuf) + 1, 0);
 		}
 
 		// 5 接受服务器信息 recv

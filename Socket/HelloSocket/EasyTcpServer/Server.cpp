@@ -53,9 +53,9 @@ int main()
 		printf("accept client IP = %s\n", inet_ntoa(clientAddr.sin_addr));
 	}
 	char recvBuff[128] = {};
-	char msgBuf[] = "";
 	while (true)
 	{
+		char msgBuf[] = "";
 		// 5 接受客户端数据
 		int recvLen = recv(_cSock, recvBuff, 128, 0);
 		if (recvLen <= 0)
