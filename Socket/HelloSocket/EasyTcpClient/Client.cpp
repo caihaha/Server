@@ -30,7 +30,15 @@ int main()
 	}
 	// 3 接受服务器信息 recv
 	char recvBuff[256] = {};
-	recv(_sock, recvBuff, 256, 0);
+	int recvLen = recv(_sock, recvBuff, 256, 0);
+	if (recvLen <= 0)
+	{
+		printf("recv error");
+	}
+	else
+	{
+		printf("recv datas : %s \n", recvBuff);
+	}
 	// 4 断开连接 closesocket
 	closesocket(_sock);
 
