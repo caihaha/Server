@@ -17,7 +17,7 @@ int main()
 	SOCKET _sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (_sock == INVALID_SOCKET)
 	{
-		printf("creat errer");
+		printf("creat errer\n");
 	}
 	// 2 连接服务端 connect
 	sockaddr_in _sin = {};
@@ -26,14 +26,18 @@ int main()
 	_sin.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
 	if (connect(_sock, (sockaddr *)&_sin, sizeof(sockaddr_in)) == SOCKET_ERROR)
 	{
-		printf("connect error");
+		printf("connect error\n");
+	}
+	else
+	{
+		printf("connect success\n");
 	}
 	// 3 接受服务器信息 recv
 	char recvBuff[256] = {};
 	int recvLen = recv(_sock, recvBuff, 256, 0);
 	if (recvLen <= 0)
 	{
-		printf("recv error");
+		printf("recv error\n");
 	}
 	else
 	{
@@ -43,5 +47,6 @@ int main()
 	closesocket(_sock);
 
 	WSACleanup(); // 和WSAStartup匹配
+	getchar();
 	return 0;
 }

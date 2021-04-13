@@ -22,20 +22,20 @@ int main()
 	_sin.sin_addr.S_un.S_addr = INADDR_ANY;
 	if (bind(_sock, (sockaddr*)&_sin, sizeof(sockaddr_in)) == SOCKET_ERROR)
 	{
-		printf("bind error");
+		printf("bind error\n");
 	}
 	else
 	{
-		printf("bind success");
+		printf("bind success\n");
 	}
 	// 3 listen 监听网络端口
 	if (listen(_sock, 5) == SOCKET_ERROR)
 	{
-		printf("listen error");
+		printf("listen error\n");
 	}
 	else
 	{
-		printf("listen success");
+		printf("listen success\n");
 	}
 	// 4 accept 等待接受客户端连接
 	sockaddr_in clientAddr = {};
@@ -47,7 +47,7 @@ int main()
 		_cSock = accept(_sock, (sockaddr*)&clientAddr, &nAddrLen);
 		if (INVALID_SOCKET == _cSock)
 		{
-			printf("client socket invalid");
+			printf("client socket invalid\n");
 		}
 		printf("accept client IP = %s \n", inet_ntoa(clientAddr.sin_addr));
 		// 5 send 向客户端发送数据
