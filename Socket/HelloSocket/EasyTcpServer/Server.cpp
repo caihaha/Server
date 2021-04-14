@@ -8,6 +8,12 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
+struct DataPacket
+{
+	int age;
+	char name[32];
+};
+
 int main()
 {
 	WORD ver = MAKEWORD(2, 2);
@@ -64,20 +70,22 @@ int main()
 			break;
 		}
 		// 6 处理请求
-		if (0 == strcmp(recvBuff, "getName"))
+		if (0 == strcmp(recvBuff, "getInfo"))
 		{
-			strcpy_s(msgBuf, "I'm CJC.");
+			DataPacket dp = { 25, "CJC" };
+			send(_cSock, (const char*)&dp, sizeof(DataPacket), 0);
 		}
 		else if (0 == strcmp(recvBuff, "getAge"))
 		{
-			strcpy_s(msgBuf, "25");
+			DataPacket dp = { 25, "" };
+			send(_cSock, (const char*)&dp, sizeof(DataPacket), 0);
 		}
 		else
 		{
-			strcpy_s(msgBuf, "???");
+			DataPacket dp = { -1, "???" };
+			send(_cSock, (const char*)&dp, sizeof(DataPacket), 0);
 		}
 		// send 向客户端发送数据
-		send(_cSock, msgBuf, strlen(msgBuf) + 1, 0);
 	}
 	
 	// 关闭套接字closesocket;

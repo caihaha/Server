@@ -8,6 +8,12 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
+struct DataPacket
+{
+	int age;
+	char name[32];
+};
+
 int main()
 {
 	WORD ver = MAKEWORD(2, 2);
@@ -50,7 +56,7 @@ int main()
 			send(_sock, cmdBuf, strlen(cmdBuf) + 1, 0);
 		}
 
-		// 5 接受服务器信息 recv
+		// 4 接受服务器信息 recv
 		char recvBuf[256] = {};
 		int recvLen = recv(_sock, recvBuf, 256, 0);
 		if (recvLen <= 0)
@@ -59,7 +65,8 @@ int main()
 		}
 		else
 		{
-			printf("recv datas : %s \n", recvBuf);
+			DataPacket* dp = (DataPacket*)recvBuf;
+			printf("age : %d, name : %s \n", dp->age, dp->name);
 		}
 	}
 	
