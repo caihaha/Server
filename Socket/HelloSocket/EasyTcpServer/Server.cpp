@@ -55,7 +55,7 @@ int main()
 	char recvBuff[128] = {};
 	while (true)
 	{
-		char msgBuf[] = "";
+		char msgBuf[256] = "";
 		// 5 接受客户端数据
 		int recvLen = recv(_cSock, recvBuff, 128, 0);
 		if (recvLen <= 0)

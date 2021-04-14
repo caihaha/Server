@@ -37,7 +37,8 @@ int main()
 	while (true)
 	{
 		// 3 向服务器发送数据
-		char cmdBuf[128] = {"123"};
+		char cmdBuf[128] = {};
+		scanf_s("%s", cmdBuf, 128);
 
 		if (0 == strcmp(cmdBuf, "exit"))
 		{
