@@ -8,11 +8,39 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
-struct DataPacket
+enum CMD
 {
-	int age;
-	char name[32];
+	CMD_LOGIN,
+	CMD_LOGOUT,
 };
+
+struct DataHeader
+{
+	short cmd;
+	short dataLength;
+};
+// DataPacket
+struct Login
+{
+	char userName[32];
+	char PassWord[32];
+};
+
+struct LoginResult
+{
+	int result;
+};
+
+struct Logout
+{
+	char userName[32];
+};
+
+struct LogoutResult
+{
+	int result;
+};
+
 
 int main()
 {
@@ -58,34 +86,43 @@ int main()
 	{
 		printf("accept client IP = %s\n", inet_ntoa(clientAddr.sin_addr));
 	}
-	char recvBuff[128] = {};
+
 	while (true)
 	{
-		char msgBuf[256] = "";
+		DataHeader header = {};
 		// 5 接受客户端数据
-		int recvLen = recv(_cSock, recvBuff, 128, 0);
+		int recvLen = recv(_cSock, (char *)&header, sizeof(DataHeader), 0);
 		if (recvLen <= 0)
 		{
 			printf("client exit\n");
 			break;
 		}
+		printf("recv data, cmd : %d, length : %d\n", header.cmd, header.dataLength);
 		// 6 处理请求
-		if (0 == strcmp(recvBuff, "getInfo"))
-		{
-			DataPacket dp = { 25, "CJC" };
-			send(_cSock, (const char*)&dp, sizeof(DataPacket), 0);
-		}
-		else if (0 == strcmp(recvBuff, "getAge"))
-		{
-			DataPacket dp = { 25, "" };
-			send(_cSock, (const char*)&dp, sizeof(DataPacket), 0);
-		}
-		else
-		{
-			DataPacket dp = { -1, "???" };
-			send(_cSock, (const char*)&dp, sizeof(DataPacket), 0);
-		}
 		// send 向客户端发送数据
+		switch (header.cmd)
+		{
+		case CMD_LOGIN:
+		{
+			Login login = {};
+			recv(_cSock, (char*)&login, sizeof(Login), 0);
+			send(_cSock, (char*)&header, sizeof(DataHeader), 0);
+			LoginResult inRet = { 1 };
+			send(_cSock, (char*)&inRet, sizeof(LoginResult), 0);
+			break;
+		}
+		case CMD_LOGOUT:
+		{
+			Logout logout = {};
+			recv(_cSock, (char*)&logout, sizeof(Logout), 0);
+			send(_cSock, (char*)&header, sizeof(DataHeader), 0);
+			LogoutResult outRet = { 1 };
+			send(_cSock, (char*)&outRet, sizeof(LogoutResult), 0);
+			break;
+		}
+		default:
+			printf("error cmd\n");
+		}
 	}
 	
 	// 关闭套接字closesocket;
