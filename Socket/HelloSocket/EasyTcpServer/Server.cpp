@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <cstring>
+#include <vector>
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -65,6 +66,46 @@ struct LogoutResult : public DataHeader
 	int result;
 };
 
+std::vector<SOCKET>g_clients;
+
+int Process(SOCKET _cSock)
+{
+	// 5 接受客户端数据
+	char szRecv[4096] = {};
+	int recvLen = recv(_cSock, szRecv, sizeof(DataHeader), 0);
+	DataHeader* header = (DataHeader*)szRecv;
+	if (recvLen <= 0)
+	{
+		printf("client exit\n");
+		return -1;
+	}
+	printf("recv data, cmd : %d, length : %d\n", header->cmd, header->dataLength);
+
+	// 6 处理请求
+	// send 向客户端发送数据
+	switch (header->cmd)
+	{
+
+	case CMD_LOGIN:
+	{
+		Login login = {};
+		recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
+		LoginResult inRet;
+		send(_cSock, (char*)&inRet, sizeof(LoginResult), 0);
+		break;
+	}
+	case CMD_LOGOUT:
+	{
+		Logout logout = {};
+		recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
+		LogoutResult outRet;
+		send(_cSock, (char*)&outRet, sizeof(LogoutResult), 0);
+		break;
+	}
+	default:
+		printf("error cmd\n");
+	}
+}
 
 int main()
 {
@@ -96,58 +137,69 @@ int main()
 	{
 		printf("listen success\n");
 	}
-	// 4 accept 等待接受客户端连接
-	sockaddr_in clientAddr = {};
-	int nAddrLen = sizeof(sockaddr_in);
-	SOCKET _cSock = INVALID_SOCKET;
 	
-	_cSock = accept(_sock, (sockaddr*)&clientAddr, &nAddrLen);
-	if (INVALID_SOCKET == _cSock)
-	{
-		printf("client socket invalid\n");
-	}
-	else
-	{
-		printf("accept client IP = %s\n", inet_ntoa(clientAddr.sin_addr));
-	}
 
 	while (true)
 	{
-		// 5 接受客户端数据
-		char szRecv[4096] = {};
-		int recvLen = recv(_cSock, szRecv, sizeof(DataHeader), 0);
-		DataHeader* header = (DataHeader*)szRecv;
-		if (recvLen <= 0)
+		// 伯克利 socket
+		fd_set fdRead;
+		fd_set fdWrite;
+		fd_set fdExp;
+
+		FD_ZERO(&fdRead);
+		FD_ZERO(&fdWrite);
+		FD_ZERO(&fdExp);
+
+		FD_SET(_sock, &fdRead);
+		FD_SET(_sock, &fdWrite);
+		FD_SET(_sock, &fdExp);
+
+		// 第一个参数nfds是一个整数值，指fd_set集合中所有描述符(socket)的范围(即最大socket+1)
+		// windows中不需要
+		int ret = select(_sock + 1, &fdRead, &fdWrite, &fdExp, NULL);
+		if (ret < 0)
 		{
-			printf("client exit\n");
+			printf("select exit\n");
 			break;
 		}
-		printf("recv data, cmd : %d, length : %d\n", header->cmd, header->dataLength);
-		
-		// 6 处理请求
-		// send 向客户端发送数据
-		switch (header->cmd)
+
+		if (FD_ISSET(_sock, &fdRead))
 		{
-			
-		case CMD_LOGIN:
+			FD_CLR(_sock, &fdRead);
+
+			// 4 accept 等待接受客户端连接
+			sockaddr_in clientAddr = {};
+			int nAddrLen = sizeof(sockaddr_in);
+			SOCKET _cSock = INVALID_SOCKET;
+
+			_cSock = accept(_sock, (sockaddr*)&clientAddr, &nAddrLen);
+			if (INVALID_SOCKET == _cSock)
+			{
+				printf("client socket invalid\n");
+			}
+			else
+			{
+				printf("accept client IP = %s\n", inet_ntoa(clientAddr.sin_addr));
+			}
+			g_clients.push_back(_cSock);
+		}
+
+		for (size_t i = 0; i < fdRead.fd_count; ++i)
 		{
-			Login login = {};
-			recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
-			LoginResult inRet;
-			send(_cSock, (char*)&inRet, sizeof(LoginResult), 0);
-			break;
+			if (-1 == Process(fdRead.fd_array[i]))
+			{
+				auto iter = std::find(g_clients.begin(), g_clients.end(), fdRead.fd_array[i]);
+				if (iter != g_clients.end())
+				{
+					g_clients.erase(iter);
+				}
+			}
 		}
-		case CMD_LOGOUT:
-		{
-			Logout logout = {};
-			recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
-			LogoutResult outRet;
-			send(_cSock, (char*)&outRet, sizeof(LogoutResult), 0);
-			break;
-		}
-		default:
-			printf("error cmd\n");
-		}
+	}
+
+	for (int i = (int)g_clients.size() - 1; i >= 0; --i)
+	{
+		closesocket(g_clients[i]);
 	}
 	
 	// 关闭套接字closesocket;
