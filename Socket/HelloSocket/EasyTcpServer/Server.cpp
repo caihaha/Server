@@ -113,23 +113,26 @@ int main()
 
 	while (true)
 	{
-		DataHeader header = {};
 		// 5 接受客户端数据
-		int recvLen = recv(_cSock, (char *)&header, sizeof(DataHeader), 0);
+		char szRecv[4096] = {};
+		int recvLen = recv(_cSock, szRecv, sizeof(DataHeader), 0);
+		DataHeader* header = (DataHeader*)szRecv;
 		if (recvLen <= 0)
 		{
 			printf("client exit\n");
 			break;
 		}
-		printf("recv data, cmd : %d, length : %d\n", header.cmd, header.dataLength);
+		printf("recv data, cmd : %d, length : %d\n", header->cmd, header->dataLength);
+		
 		// 6 处理请求
 		// send 向客户端发送数据
-		switch (header.cmd)
+		switch (header->cmd)
 		{
+			
 		case CMD_LOGIN:
 		{
 			Login login = {};
-			recv(_cSock, (char*)&login + sizeof(DataHeader), sizeof(Login) - sizeof(DataHeader), 0);
+			recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
 			LoginResult inRet;
 			send(_cSock, (char*)&inRet, sizeof(LoginResult), 0);
 			break;
@@ -137,7 +140,7 @@ int main()
 		case CMD_LOGOUT:
 		{
 			Logout logout = {};
-			recv(_cSock, (char*)&logout + sizeof(DataHeader), sizeof(Logout) - sizeof(DataHeader), 0);
+			recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
 			LogoutResult outRet;
 			send(_cSock, (char*)&outRet, sizeof(LogoutResult), 0);
 			break;
