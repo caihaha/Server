@@ -85,14 +85,13 @@ int Process(SOCKET _cSock)
 	// send 向客户端发送数据
 	switch (header->cmd)
 	{
-
 	case CMD_LOGIN:
 	{
 		Login login = {};
 		recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
 		LoginResult inRet;
 		send(_cSock, (char*)&inRet, sizeof(LoginResult), 0);
-		break;
+		return 0;
 	}
 	case CMD_LOGOUT:
 	{
@@ -100,11 +99,13 @@ int Process(SOCKET _cSock)
 		recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
 		LogoutResult outRet;
 		send(_cSock, (char*)&outRet, sizeof(LogoutResult), 0);
-		break;
+		return 0;
 	}
 	default:
 		printf("error cmd\n");
 	}
+
+	return -1;
 }
 
 int main()
@@ -153,6 +154,11 @@ int main()
 		FD_SET(_sock, &fdRead);
 		FD_SET(_sock, &fdWrite);
 		FD_SET(_sock, &fdExp);
+
+		for (int i = g_clients.size() - 1; i >= 0; --i)
+		{
+			FD_SET(g_clients[i], &fdRead);
+		}
 
 		// 第一个参数nfds是一个整数值，指fd_set集合中所有描述符(socket)的范围(即最大socket+1)
 		// windows中不需要
