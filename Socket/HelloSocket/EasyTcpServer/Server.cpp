@@ -12,9 +12,11 @@
 enum CMD
 {
 	CMD_LOGIN,
-	CMD_LOGOUT,
 	CMD_LOGIN_RESULT,
+	CMD_LOGOUT,
 	CMD_LOGOUT_RESULT,
+	CMD_NEW_USER_JOIN,
+	CMD_REEOR,
 };
 
 struct DataHeader
@@ -61,6 +63,17 @@ struct LogoutResult : public DataHeader
 	{
 		dataLength = sizeof(LogoutResult);
 		cmd = CMD_LOGOUT_RESULT;
+		result = 0;
+	}
+	int result;
+};
+
+struct NewUserJoin : public DataHeader
+{
+	NewUserJoin()
+	{
+		dataLength = sizeof(NewUserJoin);
+		cmd = CMD_NEW_USER_JOIN;
 		result = 0;
 	}
 	int result;
@@ -162,7 +175,8 @@ int main()
 
 		// 第一个参数nfds是一个整数值，指fd_set集合中所有描述符(socket)的范围(即最大socket+1)
 		// windows中不需要
-		int ret = select(_sock + 1, &fdRead, &fdWrite, &fdExp, NULL);
+		timeval t = { 0,0 };
+		int ret = select(_sock + 1, &fdRead, &fdWrite, &fdExp, &t);
 		if (ret < 0)
 		{
 			printf("select exit\n");
@@ -187,7 +201,13 @@ int main()
 			{
 				printf("accept client IP = %s\n", inet_ntoa(clientAddr.sin_addr));
 			}
+			for (int i = g_clients.size() - 1; i >= 0; --i)
+			{
+				NewUserJoin userJoin;
+				send(g_clients[i], (const char*)&userJoin, sizeof(NewUserJoin), 0);
+			}
 			g_clients.push_back(_cSock);
+			printf("New Client : socket = %d, IP = %s \n", _cSock, inet_ntoa(clientAddr.sin_addr));
 		}
 
 		for (size_t i = 0; i < fdRead.fd_count; ++i)
