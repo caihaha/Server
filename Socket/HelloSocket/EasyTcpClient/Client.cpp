@@ -87,6 +87,51 @@ struct NewUserJoin : public DataHeader
 	int result;
 };
 
+int Process(SOCKET _cSock)
+{
+	// 3 接受服务端数据
+	char szRecv[4096] = {};
+	int recvLen = recv(_cSock, szRecv, sizeof(DataHeader), 0);
+	DataHeader* header = (DataHeader*)szRecv;
+	if (recvLen <= 0)
+	{
+		printf("client exit\n");
+		return -1;
+	}
+	printf("recv data, cmd : %d, length : %d\n", header->cmd, header->dataLength);
+
+	// 4 处理请求
+	// send 向服务端发送数据
+	switch (header->cmd)
+	{
+	case CMD_LOGIN_RESULT:
+	{
+		recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
+		LoginResult *inRet = (LoginResult *)szRecv;
+		printf("recv server data. length : %d, cmd : %d", inRet->dataLength, inRet->cmd);
+		return 0;
+	}
+	case CMD_LOGOUT:
+	{
+		recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
+		LogoutResult* outRet = (LogoutResult*)szRecv;
+		printf("recv server data : length : %d, cmd : %d", outRet->dataLength, outRet->cmd);
+		return 0;
+	}
+	case CMD_NEW_USER_JOIN:
+	{
+		recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
+		NewUserJoin* userJoin = (NewUserJoin*)szRecv;
+		printf("recv server data : length : %d, cmd : %d", userJoin->dataLength, userJoin->cmd);
+		return 0;
+	}
+	default:
+		printf("error cmd.\n");
+	}
+
+	return -1;
+}
+
 int main()
 {
 	WORD ver = MAKEWORD(2, 2);
@@ -115,52 +160,38 @@ int main()
 
 	while (true)
 	{
-		// 3 向服务器发送数据
-		char cmdBuf[128] = {};
-		scanf_s("%s", cmdBuf, 128);
+		// 伯克利 socket
+		fd_set fdRead;
+		FD_ZERO(&fdRead);
+		FD_SET(_sock, &fdRead);
 
-		if (0 == strcmp(cmdBuf, "exit"))
+		timeval t = { 1, 0 };
+		// 第一个参数nfds是一个整数值，指fd_set集合中所有描述符(socket)的范围(即最大socket+1)
+		// windows中不需要
+		int ret = select(_sock + 1, &fdRead, 0, 0, &t);
+		if (ret < 0)
 		{
-			printf("printf 'exit' cmd\n");
+			printf("ret < 0, select exit\n");
 			break;
 		}
-		else if (0 == strcmp(cmdBuf,"login"))
-		{
-			Login login;
-			strcpy_s(login.userName, "CJC");
-			strcpy_s(login.PassWord, "123456");
-			send(_sock, (char *)&login, sizeof(Login), 0);
 
-			// 接受数据
-			LoginResult retLogin = {};
-			recv(_sock, (char*)&retLogin, sizeof(LoginResult), 0);
-			printf("LoginResult %d\n", retLogin.result);
-		}
-		else if (0 == strcmp(cmdBuf, "logout"))
+		if (FD_ISSET(_sock, &fdRead))
 		{
-			Logout logout;
-			strcpy_s(logout.userName, "CJC");
-			send(_sock, (char *)&logout, sizeof(Logout), 0);
-
-			LogoutResult retLogout = {};
-			recv(_sock, (char*)&retLogout, sizeof(LogoutResult), 0);
-			printf("LogoutResult %d\n", retLogout.result);
-		}
-		else
-		{
-			Error error;
-			send(_sock, (char*)&error, sizeof(Error), 0);
-
-			printf("cmd not exist. please input again:\n");
+			FD_CLR(_sock, &fdRead);
+			// 3 向服务器发送数据
+			if (Process(_sock) == -1)
+			{
+				printf("msg send == -1, select exit.\n");
+				break;
+			}
 		}
 
-		// 4 接受服务器信息 recv
-		//char recvBuf[128] = {};
-		//int recvLen = recv(_sock, recvBuf, 128, 0);
-		//if (recvLen <= 0)
-		//{
-		//	printf("recv error\n");
-		//}
+		printf("client idle.\n");
+		Login login;
+		strcpy_s(login.userName, "CJC");
+		strcpy_s(login.PassWord, "123456");
+		send(_sock, (const char*)&login, sizeof(Login), 0);
+		Sleep(1000);
 	}
 	
 	// 5 断开连接 closesocket

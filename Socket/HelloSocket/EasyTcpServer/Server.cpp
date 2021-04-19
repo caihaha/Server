@@ -122,7 +122,11 @@ int Process(SOCKET _cSock)
 		return 0;
 	}
 	default:
+	{
+		DataHeader header = { 0, CMD_ERROR };
+		send(_cSock, (char*)&header, sizeof(header), 0);
 		printf("error cmd.\n");
+	}
 	}
 
 	return -1;
@@ -189,7 +193,7 @@ int main()
 			printf("select exit\n");
 			break;
 		}
-		// printf("no block.\n"); // 测试t不为0时，select不阻塞
+		printf("server idle.\n"); // 测试t不为0时，select不阻塞
 
 		if (FD_ISSET(_sock, &fdRead))
 		{
@@ -208,14 +212,14 @@ int main()
 			else
 			{
 				printf("accept client IP = %s\n", inet_ntoa(clientAddr.sin_addr));
+				for (int i = g_clients.size() - 1; i >= 0; --i)
+				{
+					NewUserJoin userJoin;
+					send(g_clients[i], (const char*)&userJoin, sizeof(NewUserJoin), 0);
+				}
+				g_clients.push_back(_cSock);
+				printf("New Client : socket = %d, IP = %s \n", _cSock, inet_ntoa(clientAddr.sin_addr));
 			}
-			for (int i = g_clients.size() - 1; i >= 0; --i)
-			{
-				NewUserJoin userJoin;
-				send(g_clients[i], (const char*)&userJoin, sizeof(NewUserJoin), 0);
-			}
-			g_clients.push_back(_cSock);
-			printf("New Client : socket = %d, IP = %s \n", _cSock, inet_ntoa(clientAddr.sin_addr));
 		}
 
 		for (size_t i = 0; i < fdRead.fd_count; ++i)
