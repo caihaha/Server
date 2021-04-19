@@ -1,22 +1,21 @@
-#define WIN32_LEAN_AND_MEAN
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-
 #ifdef _WIN32
-#include <WinSock2.h>
-#include <windows.h>
+	#define WIN32_LEAN_AND_MEAN
+	#define _WINSOCK_DEPRECATED_NO_WARNINGS
+	#include <WinSock2.h>
+	#include <windows.h>
+	#pragma comment(lib, "ws2_32.lib")
 #else
-#include <unistd>
-#include <arpa/inet.h>
-#include <string.h>
-#define SOCKET int
-#define INVALID_SOCKET  (SOCKET)(0)
-#define SOCKET_ERROR (-1)
+	#include <unistd>
+	#include <arpa/inet.h>
+	#include <string.h>
+	#define SOCKET int
+	#define INVALID_SOCKET  (SOCKET)(0)
+	#define SOCKET_ERROR (-1)
 #endif
 
 #include <stdio.h>
 #include <iostream>
 #include <thread>
-#pragma comment(lib, "ws2_32.lib")
 
 enum CMD
 {
@@ -101,7 +100,7 @@ int Process(SOCKET _cSock)
 {
 	// 3 接受服务端数据
 	char szRecv[4096] = {};
-	int recvLen = recv(_cSock, szRecv, sizeof(DataHeader), 0);
+	int recvLen = (int)recv(_cSock, szRecv, sizeof(DataHeader), 0);
 	DataHeader* header = (DataHeader*)szRecv;
 	if (recvLen <= 0)
 	{

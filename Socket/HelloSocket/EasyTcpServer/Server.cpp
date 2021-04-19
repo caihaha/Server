@@ -1,13 +1,22 @@
-#define WIN32_LEAN_AND_MEAN
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#ifdef _WIN32
+	#define _WINSOCK_DEPRECATED_NO_WARNINGS
+	#define WIN32_LEAN_AND_MEAN
+	#include <WinSock2.h>
+	#include <windows.h>
+	#pragma comment(lib, "ws2_32.lib")
+#else
+	#include <unistd>
+	#include <arpa/inet.h>
+	#include <string.h>
+	#define SOCKET int
+	#define INVALID_SOCKET  (SOCKET)(0)
+	#define SOCKET_ERROR (-1)
+#endif
 
-#include <WinSock2.h>
-#include <windows.h>
 #include <stdio.h>
 #include <cstring>
 #include <vector>
 
-#pragma comment(lib, "ws2_32.lib")
 
 enum CMD
 {
@@ -94,7 +103,7 @@ int Process(SOCKET _cSock)
 {
 	// 5 接受客户端数据
 	char szRecv[4096] = {};
-	int recvLen = recv(_cSock, szRecv, sizeof(DataHeader), 0);
+	int recvLen = (int)recv(_cSock, szRecv, sizeof(DataHeader), 0);
 	DataHeader* header = (DataHeader*)szRecv;
 	if (recvLen <= 0)
 	{
@@ -134,9 +143,12 @@ int Process(SOCKET _cSock)
 
 int main()
 {
+#ifdef _WIN32
 	WORD ver = MAKEWORD(2, 2);
 	WSADATA data;
 	WSAStartup(ver, &data); // 启动socket
+#endif // __WIN32
+
 	// TODO 编写网络编程代码
 	// 1 建立一个socket 返回unit *
 	SOCKET _sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -144,7 +156,12 @@ int main()
 	sockaddr_in _sin = {};
 	_sin.sin_family = AF_INET;
 	_sin.sin_port = htons(4567); // host to net unsigned shot
+#ifdef _WIN32
 	_sin.sin_addr.S_un.S_addr = INADDR_ANY;
+#else
+	_sin.sin_addr.S_addr = INADDR_ANY;
+#endif // _WIN32
+
 	if (bind(_sock, (sockaddr*)&_sin, sizeof(sockaddr_in)) == SOCKET_ERROR)
 	{
 		printf("bind error\n");
@@ -163,7 +180,6 @@ int main()
 		printf("listen success\n");
 	}
 	
-
 	while (true)
 	{
 		// 伯克利 socket
@@ -178,16 +194,21 @@ int main()
 		FD_SET(_sock, &fdRead);
 		FD_SET(_sock, &fdWrite);
 		FD_SET(_sock, &fdExp);
+		SOCKET maxSock = _sock;
 
 		for (int i = g_clients.size() - 1; i >= 0; --i)
 		{
 			FD_SET(g_clients[i], &fdRead);
+			if (g_clients[i] > maxSock)
+			{
+				maxSock = g_clients[i];
+			}
 		}
 
 		timeval t = {1, 0};
 		// 第一个参数nfds是一个整数值，指fd_set集合中所有描述符(socket)的范围(即最大socket+1)
 		// windows中不需要
-		int ret = select(_sock + 1, &fdRead, &fdWrite, &fdExp, &t);
+		int ret = select(maxSock + 1, &fdRead, &fdWrite, &fdExp, &t);
 		if (ret < 0)
 		{
 			printf("select exit\n");
@@ -203,8 +224,12 @@ int main()
 			sockaddr_in clientAddr = {};
 			int nAddrLen = sizeof(sockaddr_in);
 			SOCKET _cSock = INVALID_SOCKET;
-
+#ifdef _WIN32
 			_cSock = accept(_sock, (sockaddr*)&clientAddr, &nAddrLen);
+#else
+			_cSock = accept(_sock, (sockaddr*)&clientAddr, (socklen_t *)&nAddrLen);
+#endif // _WIN32
+
 			if (INVALID_SOCKET == _cSock)
 			{
 				printf("client socket invalid\n");
@@ -222,6 +247,7 @@ int main()
 			}
 		}
 
+#ifdef _WIN32
 		for (size_t i = 0; i < fdRead.fd_count; ++i)
 		{
 			if (-1 == Process(fdRead.fd_array[i]))
@@ -233,17 +259,41 @@ int main()
 				}
 			}
 		}
+#else
+		for (int i = (int)g_clients.size() - 1; i >= 0; --i)
+		{
+			if (FD_ISSET(g_clients[i], &fdRead))
+			{
+				if (-1 == Process(g_clients[i]))
+				{
+					auto iter = g_clients.begin();
+					if (iter != g_clients.end())
+					{
+						g_clients.rease(iter);
+					}
+				}
+			}
+		}
+#endif // _WIN32
+
+		
 	}
 
+#ifdef _WIN32
 	for (int i = (int)g_clients.size() - 1; i >= 0; --i)
 	{
 		closesocket(g_clients[i]);
 	}
-	
 	// 关闭套接字closesocket;
 	closesocket(_sock);
-
 	WSACleanup(); // 和WSAStartup匹配
+#else
+	for (int i = (int)g_clients.size() - 1; i >= 0; --i)
+	{
+		close(g_clients[i]);
+	}
+	close(_sock);
+#endif
 	printf("server exit");
 	getchar();
 	return 0;
