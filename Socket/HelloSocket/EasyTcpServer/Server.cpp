@@ -266,7 +266,7 @@ int main()
 			{
 				if (-1 == Process(g_clients[i]))
 				{
-					auto iter = g_clients.begin();
+					auto iter = g_clients.begin() + i;
 					if (iter != g_clients.end())
 					{
 						g_clients.rease(iter);
