@@ -193,7 +193,7 @@ int main()
 			printf("select exit\n");
 			break;
 		}
-		printf("server idle.\n"); // 测试t不为0时，select不阻塞
+		// printf("server idle.\n"); // 测试t不为0时，select不阻塞
 
 		if (FD_ISSET(_sock, &fdRead))
 		{

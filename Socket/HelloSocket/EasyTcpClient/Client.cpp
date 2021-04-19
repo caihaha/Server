@@ -5,7 +5,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <iostream>
-
+#include <thread>
 #pragma comment(lib, "ws2_32.lib")
 
 enum CMD
@@ -98,7 +98,6 @@ int Process(SOCKET _cSock)
 		printf("client exit\n");
 		return -1;
 	}
-	printf("recv data, cmd : %d, length : %d\n", header->cmd, header->dataLength);
 
 	// 4 处理请求
 	// send 向服务端发送数据
@@ -108,21 +107,21 @@ int Process(SOCKET _cSock)
 	{
 		recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
 		LoginResult *inRet = (LoginResult *)szRecv;
-		printf("recv server data. length : %d, cmd : %d", inRet->dataLength, inRet->cmd);
+		printf("recv server data. length : %d, cmd : %d\n", inRet->dataLength, inRet->cmd);
 		return 0;
 	}
-	case CMD_LOGOUT:
+	case CMD_LOGOUT_RESULT:
 	{
 		recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
 		LogoutResult* outRet = (LogoutResult*)szRecv;
-		printf("recv server data : length : %d, cmd : %d", outRet->dataLength, outRet->cmd);
+		printf("recv server data : length : %d, cmd : %d\n", outRet->dataLength, outRet->cmd);
 		return 0;
 	}
 	case CMD_NEW_USER_JOIN:
 	{
 		recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
 		NewUserJoin* userJoin = (NewUserJoin*)szRecv;
-		printf("recv server data : length : %d, cmd : %d", userJoin->dataLength, userJoin->cmd);
+		printf("recv server data : length : %d, cmd : %d\n", userJoin->dataLength, userJoin->cmd);
 		return 0;
 	}
 	default:
@@ -130,6 +129,35 @@ int Process(SOCKET _cSock)
 	}
 
 	return -1;
+}
+
+bool G_ThreadFlag = true;
+void CmdThread(SOCKET _sock)
+{
+	while (true)
+	{
+		char cmdBuf[256] = {};
+		scanf_s("%s", cmdBuf, 256);
+		if (0 == strcmp("exit", cmdBuf))
+		{
+			G_ThreadFlag = false;
+			printf("thread exit\n");
+			return;
+		}
+		else if (0 == strcmp("login", cmdBuf))
+		{
+			Login login;
+			strcpy_s(login.userName, "CJC");
+			strcpy_s(login.PassWord, "123456");
+			send(_sock, (const char*)&login, sizeof(Login), 0);
+		}
+		else if (0 == strcmp("logout", cmdBuf))
+		{
+			Logout logout;
+			strcpy_s(logout.userName, "CJC");
+			send(_sock, (const char*)&logout, sizeof(Logout), 0);
+		}
+	}
 }
 
 int main()
@@ -158,7 +186,11 @@ int main()
 		printf("connect success\n");
 	}
 
-	while (true)
+	// 启动线程
+	std::thread t1(CmdThread, _sock);
+	t1.detach();
+
+	while (G_ThreadFlag)
 	{
 		// 伯克利 socket
 		fd_set fdRead;
@@ -186,12 +218,8 @@ int main()
 			}
 		}
 
-		printf("client idle.\n");
-		Login login;
-		strcpy_s(login.userName, "CJC");
-		strcpy_s(login.PassWord, "123456");
-		send(_sock, (const char*)&login, sizeof(Login), 0);
-		Sleep(1000);
+		//printf("client idle.\n");
+		//Sleep(1000);
 	}
 	
 	// 5 断开连接 closesocket
