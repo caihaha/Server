@@ -16,7 +16,7 @@ enum CMD
 	CMD_LOGOUT,
 	CMD_LOGOUT_RESULT,
 	CMD_NEW_USER_JOIN,
-	CMD_REEOR,
+	CMD_ERROR,
 };
 
 struct DataHeader
@@ -68,6 +68,15 @@ struct LogoutResult : public DataHeader
 	int result;
 };
 
+struct Error : public DataHeader
+{
+	Error()
+	{
+		dataLength = sizeof(LogoutResult);
+		cmd = CMD_ERROR;
+	}
+};
+
 struct NewUserJoin : public DataHeader
 {
 	NewUserJoin()
@@ -100,7 +109,6 @@ int Process(SOCKET _cSock)
 	{
 	case CMD_LOGIN:
 	{
-		Login login = {};
 		recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
 		LoginResult inRet;
 		send(_cSock, (char*)&inRet, sizeof(LoginResult), 0);
@@ -108,14 +116,13 @@ int Process(SOCKET _cSock)
 	}
 	case CMD_LOGOUT:
 	{
-		Logout logout = {};
 		recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
 		LogoutResult outRet;
 		send(_cSock, (char*)&outRet, sizeof(LogoutResult), 0);
 		return 0;
 	}
 	default:
-		printf("error cmd\n");
+		printf("error cmd.\n");
 	}
 
 	return -1;
@@ -173,15 +180,16 @@ int main()
 			FD_SET(g_clients[i], &fdRead);
 		}
 
+		timeval t = {1, 0};
 		// 第一个参数nfds是一个整数值，指fd_set集合中所有描述符(socket)的范围(即最大socket+1)
 		// windows中不需要
-		timeval t = { 0,0 };
 		int ret = select(_sock + 1, &fdRead, &fdWrite, &fdExp, &t);
 		if (ret < 0)
 		{
 			printf("select exit\n");
 			break;
 		}
+		// printf("no block.\n"); // 测试t不为0时，select不阻塞
 
 		if (FD_ISSET(_sock, &fdRead))
 		{

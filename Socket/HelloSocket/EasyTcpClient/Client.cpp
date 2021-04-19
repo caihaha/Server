@@ -15,7 +15,7 @@ enum CMD
 	CMD_LOGOUT,
 	CMD_LOGOUT_RESULT,
 	CMD_NEW_USER_JOIN,
-	CMD_REEOR,
+	CMD_ERROR,
 };
 
 struct DataHeader
@@ -65,6 +65,15 @@ struct LogoutResult : public DataHeader
 		result = 0;
 	}
 	int result;
+};
+
+struct Error : public DataHeader
+{
+	Error()
+	{
+		dataLength = sizeof(LogoutResult);
+		cmd = CMD_ERROR;
+	}
 };
 
 struct NewUserJoin : public DataHeader
@@ -139,6 +148,9 @@ int main()
 		}
 		else
 		{
+			Error error;
+			send(_sock, (char*)&error, sizeof(Error), 0);
+
 			printf("cmd not exist. please input again:\n");
 		}
 
