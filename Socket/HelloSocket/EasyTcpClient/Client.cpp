@@ -1,8 +1,18 @@
 #define WIN32_LEAN_AND_MEAN
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
+#ifdef _WIN32
 #include <WinSock2.h>
 #include <windows.h>
+#else
+#include <unistd>
+#include <arpa/inet.h>
+#include <string.h>
+#define SOCKET int
+#define INVALID_SOCKET  (SOCKET)(0)
+#define SOCKET_ERROR (-1)
+#endif
+
 #include <stdio.h>
 #include <iostream>
 #include <thread>
@@ -162,9 +172,11 @@ void CmdThread(SOCKET _sock)
 
 int main()
 {
+#ifdef _WIN32
 	WORD ver = MAKEWORD(2, 2);
 	WSADATA data;
 	WSAStartup(ver, &data); // 启动socket
+#endif
 	// TODO 编写网络编程代码
 	// 1 建立一个Socket
 	SOCKET _sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -176,7 +188,12 @@ int main()
 	sockaddr_in _sin = {};
 	_sin.sin_family = AF_INET;
 	_sin.sin_port = htons(4567);
+#ifdef _WIN32
 	_sin.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+#else
+	_sin.sin_addr.S_addr = inet_addr("127.0.0.1");
+#endif // _WIN32
+
 	if (connect(_sock, (sockaddr *)&_sin, sizeof(sockaddr_in)) == SOCKET_ERROR)
 	{
 		printf("connect error\n");
@@ -223,9 +240,12 @@ int main()
 	}
 	
 	// 5 断开连接 closesocket
+#ifdef _WIN32
 	closesocket(_sock);
-
 	WSACleanup(); // 和WSAStartup匹配
+#else
+	close(_sock);
+#endif
 	printf("client exit");
 	getchar();
 	return 0;

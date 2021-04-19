@@ -2,7 +2,7 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>E:\Project\myproject\Server\Socket\bin\Win32\Debug\EasyTcpServer.exe</FullPath>
+      <FullPath>D:\Server\Socket\bin\Win32\Debug\EasyTcpServer.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles />
