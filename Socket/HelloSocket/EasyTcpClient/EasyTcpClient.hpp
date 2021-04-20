@@ -26,34 +26,34 @@ class EasyTcpClient
 public:
 	EasyTcpClient()
 	{
-
+		_sock = INVALID_SOCKET;
 	}
 	virtual ~EasyTcpClient()
 	{
 		_sock = INVALID_SOCKET;
 	}
 
-private:
+public:
 	// 建立socket
 	int InitSocket();
 
 	// 连接socket
-	int Connect(char* ip, unsigned short port);
+	int Connect(const char* ip, unsigned short port);
 
 	// 关闭socket
 	void Close();
 
 	// 发送数据
 	int SendData(DataHeader* header);
-	void OnNetMsg(SOCKET _sock, DataHeader* header);
 
 	// 接受数据
-	int RecvData(SOCKET _sock);
+	int RecvData();
 
 	// 处理网络消息
-	bool DealMsg();
+	bool OnRun();
 
 	bool IsRun() { return _sock != INVALID_SOCKET; }
+	void OnNetMsg(DataHeader* header);
 private:
 	SOCKET _sock;
 };
@@ -84,7 +84,7 @@ int EasyTcpClient::InitSocket()
 	return _sock;
 }
 
-int EasyTcpClient::Connect(char *ip, unsigned short port)
+int EasyTcpClient::Connect(const char *ip, unsigned short port)
 {
 	if (_sock == INVALID_SOCKET)
 	{
@@ -126,7 +126,7 @@ void EasyTcpClient::Close()
 #endif
 }
 
-bool EasyTcpClient::DealMsg()
+bool EasyTcpClient::OnRun()
 {
 	if(!IsRun())
 	{
@@ -151,7 +151,7 @@ bool EasyTcpClient::DealMsg()
 	{
 		FD_CLR(_sock, &fdRead);
 		// 3 向服务器发送数据
-		if (RecvData(_sock) == -1)
+		if (RecvData() == -1)
 		{
 			printf("msg send == -1, select exit.\n");
 			return false;;
@@ -161,11 +161,11 @@ bool EasyTcpClient::DealMsg()
 	return true;
 }
 
-int EasyTcpClient::RecvData(SOCKET _cSock)
+int EasyTcpClient::RecvData()
 {
 	// 3 接受服务端数据
 	char szRecv[4096] = {};
-	int recvLen = (int)recv(_cSock, szRecv, sizeof(DataHeader), 0);
+	int recvLen = (int)recv(_sock, szRecv, sizeof(DataHeader), 0);
 	DataHeader* header = (DataHeader*)szRecv;
 	if (recvLen <= 0)
 	{
@@ -173,13 +173,13 @@ int EasyTcpClient::RecvData(SOCKET _cSock)
 		return -1;
 	}
 
-	recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
-	OnNetMsg(_cSock, header);
+	recv(_sock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
+	OnNetMsg(header);
 
 	return -1;
 }
 
-void EasyTcpClient::OnNetMsg(SOCKET _sock, DataHeader *header)
+void EasyTcpClient::OnNetMsg(DataHeader *header)
 {
 	switch (header->cmd)
 	{
