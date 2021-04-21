@@ -30,7 +30,7 @@ public:
 	}
 	virtual ~EasyTcpClient()
 	{
-		_sock = INVALID_SOCKET;
+		Close();
 	}
 
 public:
@@ -53,6 +53,8 @@ public:
 	bool OnRun();
 
 	bool IsRun() { return _sock != INVALID_SOCKET; }
+	
+	// ÏìÓ¦ÍøÂçÏûÏ¢
 	void OnNetMsg(DataHeader* header);
 private:
 	SOCKET _sock;
