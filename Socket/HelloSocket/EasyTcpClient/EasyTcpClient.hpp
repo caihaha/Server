@@ -144,6 +144,7 @@ bool EasyTcpClient::OnRun()
 	if (ret < 0)
 	{
 		printf("ret < 0, select exit\n");
+		Close();
 		return false;
 	}
 

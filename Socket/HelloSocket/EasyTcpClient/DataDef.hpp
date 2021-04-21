@@ -1,3 +1,8 @@
+#ifndef _DataDef_hpp_
+#define _DataDef_hpp_
+#endif // !_DataDef_hpp_
+
+
 enum CMD
 {
 	CMD_LOGIN,
