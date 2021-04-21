@@ -44,7 +44,7 @@ public:
 	void Close();
 
 	// 发送数据
-	int SendData(DataHeader* header);
+	int SendData(const char* data, int length);
 
 	// 接受数据
 	int RecvData();
@@ -154,7 +154,7 @@ bool EasyTcpClient::OnRun()
 		if (RecvData() == -1)
 		{
 			printf("msg send == -1, select exit.\n");
-			return false;;
+			return false;
 		}
 	}
 
@@ -176,7 +176,7 @@ int EasyTcpClient::RecvData()
 	recv(_sock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
 	OnNetMsg(header);
 
-	return -1;
+	return 0;
 }
 
 void EasyTcpClient::OnNetMsg(DataHeader *header)
@@ -207,11 +207,11 @@ void EasyTcpClient::OnNetMsg(DataHeader *header)
 
 }
 
-int EasyTcpClient::SendData(DataHeader* header)
+int EasyTcpClient::SendData(const char* data, int length)
 {
-	if (IsRun() && header != NULL)
+	if (IsRun() && data != NULL)
 	{
-		return send(_sock, (const char*)&header, header->dataLength, 0);
+		return send(_sock, data, length, 0);
 	}
 
 	return SOCKET_ERROR;

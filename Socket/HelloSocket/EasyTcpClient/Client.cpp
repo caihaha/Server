@@ -17,13 +17,13 @@ void CmdThread(EasyTcpClient* client)
 			Login login;
 			strcpy_s(login.userName, "CJC");
 			strcpy_s(login.PassWord, "123456");
-			client->SendData(&login);
+			client->SendData((const char *)&login, login.dataLength);
 		}
 		else if (0 == strcmp("logout", cmdBuf))
 		{
 			Logout logout;
 			strcpy_s(logout.userName, "CJC");
-			client->SendData(&logout);
+			client->SendData((const char*)&logout, logout.dataLength);
 		}
 		else
 		{
@@ -42,7 +42,10 @@ int main()
 
 	while (client.IsRun())
 	{
-		client.OnRun();
+		if (!client.OnRun())
+		{
+			break;
+		}
 	}
 
 	client.Close();
