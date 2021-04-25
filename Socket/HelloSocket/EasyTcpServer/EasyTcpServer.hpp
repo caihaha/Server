@@ -16,10 +16,55 @@
 #define SOCKET_ERROR (-1)
 #endif
 
+#define RECV_BUFF_SIZE 10240
+
 #include <stdio.h>
 #include <vector>
 
 #include "DataDef.hpp"
+
+class ClientSocket
+{
+public:
+	ClientSocket(SOCKET sockfd)
+	{
+		_sockfd = sockfd;
+		memset(_szMsgBuf, 0, sizeof(_szMsgBuf));
+		_lastPos = 0;
+	}
+
+	SOCKET GetSocketfd()
+	{
+		return _sockfd;
+	}
+
+	char* GetMsgBuf()
+	{
+		return _szMsgBuf;
+	}
+
+	const int GetLastPos() const
+	{
+		return _lastPos;
+	}
+
+	void SetLastPos(int pos)
+	{
+		_lastPos = pos;
+	}
+
+	bool operator==(ClientSocket& var)
+	{
+		return var._sockfd == _sockfd;
+	}
+private:
+	SOCKET _sockfd; // socket fd_set file desc set
+	// 接收缓冲区
+	char _szRecv[RECV_BUFF_SIZE] = {};
+	// 二级缓冲区
+	char _szMsgBuf[RECV_BUFF_SIZE * 10] = {};
+	int _lastPos = 0;
+};
 
 class EasyTcpServer
 {
@@ -66,7 +111,7 @@ public:
 
 private:
 	SOCKET _sock;
-	std::vector<SOCKET> _clients;
+	std::vector<ClientSocket*> _clients;
 };
 
 int EasyTcpServer::InitSocket()
@@ -154,14 +199,14 @@ int EasyTcpServer::Accept()
 	// 4 accept 等待接受客户端连接
 	sockaddr_in clientAddr = {};
 	int nAddrLen = sizeof(sockaddr_in);
-	SOCKET _cSock = INVALID_SOCKET;
+	SOCKET cSock = INVALID_SOCKET;
 #ifdef _WIN32
-	_cSock = accept(_sock, (sockaddr*)&clientAddr, &nAddrLen);
+	cSock = accept(_sock, (sockaddr*)&clientAddr, &nAddrLen);
 #else
-	_cSock = accept(_sock, (sockaddr*)&clientAddr, (socklen_t*)&nAddrLen);
+	cSock = accept(_sock, (sockaddr*)&clientAddr, (socklen_t*)&nAddrLen);
 #endif // _WIN32
 
-	if (INVALID_SOCKET == _cSock)
+	if (INVALID_SOCKET == cSock)
 	{
 		printf("client socket invalid\n");
 	}
@@ -169,8 +214,8 @@ int EasyTcpServer::Accept()
 	{
 		NewUserJoin userJoin;
 		SendData2All((const char*)&userJoin, userJoin.dataLength);
-		_clients.push_back(_cSock);
-		printf("New Client : socket = %d, IP = %s \n", _cSock, inet_ntoa(clientAddr.sin_addr));
+		_clients.push_back(new ClientSocket(cSock));
+		printf("New Client : socket = %d, IP = %s \n", cSock, inet_ntoa(clientAddr.sin_addr));
 	}
 
 	return _sock;
@@ -194,10 +239,11 @@ bool EasyTcpServer::OnRun()
 
 	for (int i = _clients.size() - 1; i >= 0; --i)
 	{
-		FD_SET(_clients[i], &fdRead);
-		if (_clients[i] > maxSock)
+		SOCKET clientSocket = _clients[i]->GetSocketfd();
+		FD_SET(clientSocket, &fdRead);
+		if (clientSocket > maxSock)
 		{
-			maxSock = _clients[i];
+			maxSock = clientSocket;
 		}
 	}
 
@@ -218,34 +264,22 @@ bool EasyTcpServer::OnRun()
 		Accept();
 	}
 
-#ifdef _WIN32
-	for (size_t i = 0; i < fdRead.fd_count; ++i)
+	for (int i = (int)_clients.size() - 1; i >= 0; --i)
 	{
-		if (-1 == RecvData(fdRead.fd_array[i]))
+		SOCKET clientSocket = _clients[i]->GetSocketfd();
+		if (FD_ISSET(clientSocket, &fdRead))
 		{
-			auto iter = std::find(_clients.begin(), _clients.end(), fdRead.fd_array[i]);
-			if (iter != _clients.end())
-			{
-				_clients.erase(iter);
-			}
-		}
-	}
-#else
-	for (int i = (int)g_clients.size() - 1; i >= 0; --i)
-	{
-		if (FD_ISSET(_clients[i], &fdRead))
-		{
-			if (-1 == Process(_clients[i]))
+			if (-1 == RecvData(clientSocket))
 			{
 				auto iter = _clients.begin() + i;
 				if (iter != _clients.end())
 				{
-					_clients.rease(iter);
+					delete _clients[i];
+					_clients.erase(iter);
 				}
 			}
 		}
 	}
-#endif // _WIN32
 }
 
 void EasyTcpServer::Close()
@@ -258,7 +292,8 @@ void EasyTcpServer::Close()
 #ifdef _WIN32
 	for (int i = (int)_clients.size() - 1; i >= 0; --i)
 	{
-		closesocket(_clients[i]);
+		closesocket(_clients[i]->GetSocketfd());
+		delete _clients[i];
 	}
 	// 关闭套接字closesocket;
 	closesocket(_sock);
@@ -266,10 +301,12 @@ void EasyTcpServer::Close()
 #else
 	for (int i = (int)_clients.size() - 1; i >= 0; --i)
 	{
-		close(_clients[i]);
+		close(_clients[i]->GetSocketfd());
+		delete _clients[i];
 	}
 	close(_sock);
 #endif
+	_clients.clear();
 }
 
 int EasyTcpServer::SendData(SOCKET _cSock, const char* data, int length)
@@ -288,9 +325,9 @@ void EasyTcpServer::SendData2All(const char* data, int length)
 	{
 		for (int i = (int)_clients.size() - 1; i >= 0; --i)
 		{
-			if (SendData(_clients[i], data, length) == SOCKET_ERROR)
+			if (SendData(_clients[i]->GetSocketfd(), data, length) == SOCKET_ERROR)
 			{
-				printf("send data error. socket : %d", _clients[i]);
+				printf("send data error. socket : %d", _clients[i]->GetSocketfd());
 			}
 		}
 	}
