@@ -300,17 +300,17 @@ int EasyTcpServer::RecvData(SOCKET _cSock)
 {
 	// 5 接受客户端数据
 	char szRecv[4096] = {};
-	int recvLen = (int)recv(_cSock, szRecv, sizeof(DataHeader), 0);
-	DataHeader* header = (DataHeader*)szRecv;
+	int recvLen = (int)recv(_cSock, szRecv, 4096, 0);
+	// DataHeader* header = (DataHeader*)szRecv;
 	if (recvLen <= 0)
 	{
 		printf("client exit\n");
 		return -1;
 	}
-	printf("recv data, cmd : %d, length : %d\n", header->cmd, header->dataLength);
+	// printf("recv data, cmd : %d, length : %d\n", header->cmd, header->dataLength);
 	
-	recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
-	OnNetMsg(header);
+	// recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
+	// OnNetMsg(header);
 	
 	return 0;
 }

@@ -16,6 +16,8 @@
 #define SOCKET_ERROR (-1)
 #endif
 
+#define RECV_BUFF_SIZE 10240
+
 #include <stdio.h>
 #include <thread>
 
@@ -58,6 +60,11 @@ public:
 	void OnNetMsg(DataHeader* header);
 private:
 	SOCKET _sock;
+	// 接收缓冲区
+	char _szRecv[RECV_BUFF_SIZE] = {};
+	// 二级缓冲区
+	char _szMsgBuf[RECV_BUFF_SIZE * 10] = {};
+	int _lastPos = 0;
 };
 
 int EasyTcpClient::InitSocket()
@@ -167,18 +174,36 @@ bool EasyTcpClient::OnRun()
 int EasyTcpClient::RecvData()
 {
 	// 3 接受服务端数据
-	char szRecv[4096] = {};
-	int recvLen = (int)recv(_sock, szRecv, 4096, 0);
-	printf("recvLen = %d", recvLen);
-	//DataHeader* header = (DataHeader*)szRecv;
-	//if (recvLen <= 0)
-	//{
-	//	printf("client exit\n");
-	//	return -1;
-	//}
-
-	//recv(_sock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
-	//OnNetMsg(header);
+	// char szRecv[4096] = {};
+	int recvLen = (int)recv(_sock, _szRecv, 4096, 0);
+	//printf("recvLen = %d", recvLen);
+	//DataHeader* header = (DataHeader*)_szRecv;
+	if (recvLen <= 0)
+	{
+		printf("client exit\n");
+		return -1;
+	}
+	memcpy(_szMsgBuf + _lastPos, _szRecv, recvLen);
+	_lastPos += recvLen;
+	// 判断消息缓冲区数据长度是否大于消息头
+	// 就可以知道当前消息的长度
+	while (_lastPos >= sizeof(DataHeader))
+	{
+		DataHeader* header = (DataHeader*)_szMsgBuf;
+		if (_lastPos >= header->dataLength)
+		{
+			// 剩余消息缓冲区长度
+			int size = _lastPos - header->dataLength;
+			OnNetMsg(header);
+			memcpy(_szMsgBuf, _szRecv + header->dataLength, size);
+			_lastPos = size;
+		}
+		else
+		{
+			// 剩余数据不足一条完整消息
+			break;
+		}
+	}
 
 	return 0;
 }
@@ -203,6 +228,12 @@ void EasyTcpClient::OnNetMsg(DataHeader *header)
 	{
 		NewUserJoin* userJoin = (NewUserJoin*)header;
 		printf("recv server data : length : %d, cmd : %d\n", userJoin->dataLength, userJoin->cmd);
+		break;
+	}
+	case CMD_ERROR:
+	{
+		Error* error = (Error*)header;
+		printf("recv server data : length : %d, cmd : %d\n", error->dataLength, error->cmd);
 		break;
 	}
 	default:
