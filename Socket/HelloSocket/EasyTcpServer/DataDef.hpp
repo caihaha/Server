@@ -23,6 +23,7 @@ struct Login : public DataHeader
 	}
 	char userName[32];
 	char PassWord[32];
+	char data[932];
 };
 
 struct LoginResult : public DataHeader
@@ -34,6 +35,7 @@ struct LoginResult : public DataHeader
 		result = 0;
 	}
 	int result;
+	char data[992];
 };
 
 struct Logout : public DataHeader
@@ -61,7 +63,7 @@ struct Error : public DataHeader
 {
 	Error()
 	{
-		dataLength = sizeof(LogoutResult);
+		dataLength = sizeof(Error);
 		cmd = CMD_ERROR;
 	}
 };

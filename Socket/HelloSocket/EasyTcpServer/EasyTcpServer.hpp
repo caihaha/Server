@@ -26,19 +26,24 @@
 class ClientSocket
 {
 public:
-	ClientSocket(SOCKET sockfd)
+	ClientSocket(const SOCKET sockfd)
 	{
 		_sockfd = sockfd;
 		memset(_szMsgBuf, 0, sizeof(_szMsgBuf));
 		_lastPos = 0;
 	}
 
-	SOCKET GetSocketfd()
+	const SOCKET GetSocketfd() const
 	{
 		return _sockfd;
 	}
 
-	char* GetMsgBuf()
+	char* RecvBuf()
+	{
+		return _szRecv;
+	}
+
+	char* MsgBuf()
 	{
 		return _szMsgBuf;
 	}
@@ -48,12 +53,12 @@ public:
 		return _lastPos;
 	}
 
-	void SetLastPos(int pos)
+	void SetLastPos(const int pos)
 	{
 		_lastPos = pos;
 	}
 
-	bool operator==(ClientSocket& var)
+	bool operator==(const ClientSocket& var)
 	{
 		return var._sockfd == _sockfd;
 	}
@@ -63,6 +68,7 @@ private:
 	char _szRecv[RECV_BUFF_SIZE] = {};
 	// 二级缓冲区
 	char _szMsgBuf[RECV_BUFF_SIZE * 10] = {};
+
 	int _lastPos = 0;
 };
 
@@ -99,7 +105,7 @@ public:
 	void SendData2All(const char* data, int length);
 
 	// 接受数据
-	int RecvData(SOCKET _cSock);
+	int RecvData(ClientSocket* client);
 
 	// 处理网络消息
 	bool OnRun();
@@ -107,7 +113,7 @@ public:
 	bool IsRun() { return _sock != INVALID_SOCKET; }
 	
 	// 响应网络消息
-	void OnNetMsg(DataHeader* header);
+	void OnNetMsg(SOCKET sock, DataHeader* header);
 
 private:
 	SOCKET _sock;
@@ -269,7 +275,7 @@ bool EasyTcpServer::OnRun()
 		SOCKET clientSocket = _clients[i]->GetSocketfd();
 		if (FD_ISSET(clientSocket, &fdRead))
 		{
-			if (-1 == RecvData(clientSocket))
+			if (-1 == RecvData(_clients[i]))
 			{
 				auto iter = _clients.begin() + i;
 				if (iter != _clients.end())
@@ -280,6 +286,8 @@ bool EasyTcpServer::OnRun()
 			}
 		}
 	}
+
+	return true;
 }
 
 void EasyTcpServer::Close()
@@ -309,11 +317,11 @@ void EasyTcpServer::Close()
 	_clients.clear();
 }
 
-int EasyTcpServer::SendData(SOCKET _cSock, const char* data, int length)
+int EasyTcpServer::SendData(SOCKET sock, const char* data, int length)
 {
 	if (IsRun() && data != NULL)
 	{
-		return send(_sock, data, length, 0);
+		return send(sock, data, length, 0);
 	}
 
 	return SOCKET_ERROR;
@@ -333,26 +341,53 @@ void EasyTcpServer::SendData2All(const char* data, int length)
 	}
 }
 
-int EasyTcpServer::RecvData(SOCKET _cSock)
+int EasyTcpServer::RecvData(ClientSocket* client)
 {
 	// 5 接受客户端数据
-	char szRecv[4096] = {};
-	int recvLen = (int)recv(_cSock, szRecv, 4096, 0);
-	// DataHeader* header = (DataHeader*)szRecv;
+	int lastPos = client->GetLastPos();
+	char* szRecv = client->RecvBuf();
+	char* msgBuf = client->MsgBuf();
+	int recvLen = (int)recv(client->GetSocketfd(), szRecv, RECV_BUFF_SIZE, 0);
 	if (recvLen <= 0)
 	{
 		printf("client exit\n");
 		return -1;
 	}
-	// printf("recv data, cmd : %d, length : %d\n", header->cmd, header->dataLength);
-	
-	// recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
-	// OnNetMsg(header);
-	
+	memcpy(msgBuf + lastPos, szRecv, recvLen);
+
+	lastPos += recvLen;
+	// 判断消息缓冲区数据长度是否大于消息头
+	// 就可以知道当前消息的长度
+	while (lastPos >= sizeof(DataHeader))
+	{
+		DataHeader* header = (DataHeader*)msgBuf;
+		if (lastPos >= header->dataLength)
+		{
+			// 剩余消息缓冲区长度
+			int size = lastPos - header->dataLength;
+			OnNetMsg(client->GetSocketfd(), header);
+			if (size > 0)
+			{
+				memcpy(msgBuf, msgBuf + header->dataLength, size);
+			}
+			else
+			{
+				memcpy(msgBuf, msgBuf + header->dataLength, 1);
+			}
+			lastPos = size;
+		}
+		else
+		{
+			// 剩余数据不足一条完整消息
+			break;
+		}
+	}
+
+	client->SetLastPos(lastPos);
 	return 0;
 }
 
-void EasyTcpServer::OnNetMsg(DataHeader* header)
+void EasyTcpServer::OnNetMsg(SOCKET sock, DataHeader* header)
 {
 	// 6 处理请求
 	// send 向客户端发送数据
@@ -361,19 +396,19 @@ void EasyTcpServer::OnNetMsg(DataHeader* header)
 	case CMD_LOGIN:
 	{
 		LoginResult inRet;
-		send(_sock, (char*)&inRet, sizeof(LoginResult), 0);
+		send(sock, (char*)&inRet, sizeof(LoginResult), 0);
 		return;
 	}
 	case CMD_LOGOUT:
 	{
 		LogoutResult outRet;
-		send(_sock, (char*)&outRet, sizeof(LogoutResult), 0);
+		send(sock, (char*)&outRet, sizeof(LogoutResult), 0);
 		return;
 	}
 	default:
 	{
 		DataHeader header = { 0, CMD_ERROR };
-		send(_sock, (char*)&header, sizeof(header), 0);
+		send(sock, (char*)&header, sizeof(header), 0);
 		printf("error cmd.\n");
 	}
 	}

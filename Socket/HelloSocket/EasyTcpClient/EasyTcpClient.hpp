@@ -64,6 +64,7 @@ private:
 	char _szRecv[RECV_BUFF_SIZE] = {};
 	// 二级缓冲区
 	char _szMsgBuf[RECV_BUFF_SIZE * 10] = {};
+
 	int _lastPos = 0;
 };
 
@@ -195,7 +196,16 @@ int EasyTcpClient::RecvData()
 			// 剩余消息缓冲区长度
 			int size = _lastPos - header->dataLength;
 			OnNetMsg(header);
-			memcpy(_szMsgBuf, _szRecv + header->dataLength, size);
+			// 删掉二级缓冲区已处理的消息
+			if (size > 0)
+			{
+				memcpy(_szMsgBuf, _szMsgBuf + header->dataLength, size);
+			}
+			else
+			{
+				// 没有消息
+				memcpy(_szMsgBuf, _szMsgBuf + header->dataLength, 1);
+			}
 			_lastPos = size;
 		}
 		else
