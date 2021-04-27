@@ -24,6 +24,7 @@
 #include <thread>
 
 #include "DataDef.hpp"
+#include "CELLTimestamp.hpp"
 
 class ClientSocket
 {
@@ -120,6 +121,8 @@ public:
 private:
 	SOCKET _sock;
 	std::vector<ClientSocket*> _clients;
+	CELLTimestamp _tTime;
+	int _recvCount;
 };
 
 int EasyTcpServer::InitSocket()
@@ -393,6 +396,13 @@ void EasyTcpServer::OnNetMsg(SOCKET sock, DataHeader* header)
 {
 	// 6 处理请求
 	// send 向客户端发送数据
+	++_recvCount;
+	auto t1 = _tTime.GetElapsedSecond();
+	if (t1 >= 1.0)
+	{
+		printf("socket : %d , _recvCount : %d , time : %lf \n", sock, _recvCount, t1);
+		_tTime.Update();
+	}
 	switch (header->cmd)
 	{
 	case CMD_LOGIN:
