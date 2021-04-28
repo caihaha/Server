@@ -26,7 +26,7 @@
     <ClInclude Include="DataDef.hpp">
       <Filter>源文件</Filter>
     </ClInclude>
-    <ClInclude Include="EaayTcpClient.h">
+    <ClInclude Include="EasyTcpClient.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
