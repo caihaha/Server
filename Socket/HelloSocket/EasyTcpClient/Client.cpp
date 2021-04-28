@@ -1,6 +1,7 @@
 #include "EasyTcpClient.hpp"
 
-void CmdThread(EasyTcpClient* client)
+int g_bRun = true;
+void CmdThread()
 {
 	while (true)
 	{
@@ -8,22 +9,23 @@ void CmdThread(EasyTcpClient* client)
 		scanf_s("%s", cmdBuf, 256);
 		if (0 == strcmp("exit", cmdBuf))
 		{
-			client->Close();
+			// client->Close();
+			g_bRun = false;
 			printf("thread exit\n");
 			return;
 		}
 		else if (0 == strcmp("login", cmdBuf))
 		{
-			Login login;
-			strcpy_s(login.userName, "CJC");
-			strcpy_s(login.PassWord, "123456");
-			client->SendData((const char *)&login, login.dataLength);
+			//Login login;
+			//strcpy_s(login.userName, "CJC");
+			//strcpy_s(login.PassWord, "123456");
+			//client->SendData((const char *)&login, login.dataLength);
 		}
 		else if (0 == strcmp("logout", cmdBuf))
 		{
-			Logout logout;
-			strcpy_s(logout.userName, "CJC");
-			client->SendData((const char*)&logout, logout.dataLength);
+			//Logout logout;
+			//strcpy_s(logout.userName, "CJC");
+			//client->SendData((const char*)&logout, logout.dataLength);
 		}
 		else
 		{
@@ -32,24 +34,72 @@ void CmdThread(EasyTcpClient* client)
 	}
 }
 
-int main()
-{
-    EasyTcpClient client;
-	client.InitSocket();
-	client.Connect("127.0.0.1", 4567);
-	std::thread t1(CmdThread, &client);
-	t1.detach();
+const int cCount = 1000;
+const int tCount = 4;
+const int count = cCount / tCount;
+EasyTcpClient* client[cCount];
 
-	while (client.IsRun())
+void SendThread(int id)
+{
+	if (!g_bRun)
 	{
-		if (!client.OnRun())
+		return;
+	}
+
+	int begin = (id - 1) * count;
+	int end = id * count;
+
+	for (int i = begin; i < end; ++i)
+	{
+		client[i] = new EasyTcpClient();
+	}
+
+	for (int i = begin; i < end; ++i)
+	{
+		client[i]->InitSocket();
+		client[i]->Connect("127.0.0.1", 4567);
+		printf("connect count : %d", i);
+	}
+
+	Login login;
+	strcpy_s(login.userName, "CJC");
+	strcpy_s(login.PassWord, "123456");
+
+	while (g_bRun)
+	{
+		for (int i = begin; i < end; ++i)
 		{
-			break;
+			client[i]->SendData((const char*)(&login), login.dataLength);
+			/*if (!client[i]->OnRun())
+			{
+				continue;
+			}*/
 		}
 	}
 
-	client.Close();
-	printf("client exit\n");
+	for (int i = begin; i < end; ++i)
+	{
+		client[i]->Close();
+	}
+}
+
+int main()
+{
+	if (!g_bRun)
+	{
+		return 0;
+	}
+
+	std::thread t1(CmdThread);
+	t1.detach();
+
+	for (int i = 0; i < tCount; ++i)
+	{
+		std::thread t(SendThread, i + 1);
+		t.detach();
+	}
+
+	printf("all client exit\n");
 	getchar();
     return 0;
 }
