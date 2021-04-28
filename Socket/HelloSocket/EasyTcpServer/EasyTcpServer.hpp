@@ -273,6 +273,7 @@ bool EasyTcpServer::OnRun()
 	{
 		FD_CLR(_sock, &fdRead);
 		Accept();
+		return true;
 	}
 
 	for (int i = (int)_clients.size() - 1; i >= 0; --i)
