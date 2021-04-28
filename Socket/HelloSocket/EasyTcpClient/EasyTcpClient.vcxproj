@@ -151,7 +151,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DataDef.hpp" />
-    <ClInclude Include="EasyTcpClient.hpp" />
+    <ClInclude Include="EaayTcpClient.h" />
+    <ClInclude Include="EasyTcpClient.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
