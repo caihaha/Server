@@ -27,6 +27,7 @@ int main()
 	server.InitSocket();
 	server.Bind(NULL, 4567);
 	server.Listen(5);
+	server.Start();
 
 	std::thread t1(CmdThread);
 	t1.detach();
