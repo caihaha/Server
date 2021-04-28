@@ -1,4 +1,5 @@
-#include "EasyTcpClient.hpp"
+#include "EasyTcpClient.h"
+#include "EasyTcpClient.cpp"
 
 int g_bRun = true;
 void CmdThread()

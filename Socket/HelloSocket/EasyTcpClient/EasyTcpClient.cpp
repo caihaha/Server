@@ -1,7 +1,5 @@
 #include "EasyTcpClient.h"
 
-
-
 int EasyTcpClient::InitSocket()
 {
 	if (_sock != INVALID_SOCKET)

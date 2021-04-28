@@ -1,4 +1,5 @@
-#include "EasyTcpServer.hpp"
+#include "EasyTcpServer.h"
+#include "EasyTcpServer.cpp"
 
 bool g_bRun = true;
 
