@@ -1,5 +1,6 @@
 #include "EasyTcpServer.h"
 #include "EasyTcpServer.cpp"
+#pragma once
 
 bool g_bRun = true;
 

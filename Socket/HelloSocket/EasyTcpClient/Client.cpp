@@ -1,5 +1,6 @@
 #include "EasyTcpClient.h"
 #include "EasyTcpClient.cpp"
+#pragma once
 
 int g_bRun = true;
 void CmdThread()
@@ -35,7 +36,7 @@ void CmdThread()
 	}
 }
 
-const int cCount = 1000;
+const int cCount = 200;
 const int tCount = 4;
 const int count = cCount / tCount;
 EasyTcpClient* client[cCount];
@@ -59,7 +60,7 @@ void SendThread(int id)
 	{
 		client[i]->InitSocket();
 		client[i]->Connect("127.0.0.1", 4567);
-		printf("connect count : %d", i);
+		printf("connect count : %d\n", i);
 	}
 
 	Login login;

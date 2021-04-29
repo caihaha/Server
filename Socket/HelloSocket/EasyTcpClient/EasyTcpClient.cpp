@@ -16,11 +16,11 @@ int EasyTcpClient::InitSocket()
 	_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (_sock == INVALID_SOCKET)
 	{
-		printf("socket creat errer\n");
+		printf("socket %d creat errer\n", _sock);
 	}
 	else
 	{
-		printf("socket creat success\n");
+		// printf("socket creat success\n");
 	}
 
 	return _sock;
@@ -44,11 +44,11 @@ int EasyTcpClient::Connect(const char *ip, unsigned short port)
 	int ret = connect(_sock, (sockaddr*)&_sin, sizeof(sockaddr_in));
 	if (ret == SOCKET_ERROR)
 	{
-		printf("connect error\n");
+		printf("socket : %d connect error\n", _sock);
 	}
 	else
 	{
-		printf("connect success\n");
+		printf("socket : %d connect success\n", _sock);
 	}
 	return ret;
 }

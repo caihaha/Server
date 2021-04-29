@@ -189,6 +189,16 @@ size_t CellServer::GetClientSize()
 	return _clients.size() + _clientBuff.size();
 }
 
+int CellServer::GetRecvCount()
+{
+	return _recvCount;
+}
+
+void CellServer::SetRecvCount(int count)
+{
+	_recvCount = count;
+}
+
 void CellServer::AddClientBuff(ClientSocket* client)
 {
 	std::lock_guard<std::mutex> lg(_mutex);
@@ -341,7 +351,7 @@ bool EasyTcpServer::OnRun()
 	FD_SET(_sock, &fdExp);
 	SOCKET maxSock = _sock;
 
-	timeval t = { 1, 0 };
+	timeval t = { 0, 10 };
 	// 第一个参数nfds是一个整数值，指fd_set集合中所有描述符(socket)的范围(即最大socket+1)
 	// windows中不需要
 	int ret = select(maxSock + 1, &fdRead, &fdWrite, &fdExp, &t);
@@ -419,12 +429,13 @@ void EasyTcpServer::Time4Msg()
 	if (t1 >= 1.0)
 	{
 		int recvCount = 0;
-		//for (auto server : _cellServers)
-		//{
-		//	recvCount += server
-		//}
+		for (auto server : _cellServers)
+		{
+			recvCount += server->GetRecvCount();
+			server->SetRecvCount(0);
+		}
 
-		//printf("socket : %d , _recvCount : %d , time : %lf \n", sock, _recvCount, t1);
+		printf("socket : %d , _recvCount : %d , time : %lf \n", _sock, recvCount, (recvCount / t1));
 		_tTime.Update();
 	}
 }

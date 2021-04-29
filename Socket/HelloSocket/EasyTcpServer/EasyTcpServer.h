@@ -118,6 +118,10 @@ public:
 	void ClearClientBuff();
 
 	size_t GetClientSize();
+
+	int GetRecvCount();
+
+	void SetRecvCount(int count);
 private:
 	CellServer() {}
 
