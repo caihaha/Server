@@ -23,18 +23,9 @@ bool CellServer::OnRun()
 
 		// 伯克利 socket
 		fd_set fdRead;
-		fd_set fdWrite;
-		fd_set fdExp;
-
 		FD_ZERO(&fdRead);
-		FD_ZERO(&fdWrite);
-		FD_ZERO(&fdExp);
 
-		FD_SET(_sock, &fdRead);
-		FD_SET(_sock, &fdWrite);
-		FD_SET(_sock, &fdExp);
 		SOCKET maxSock = _sock;
-
 		for (int i = _clients.size() - 1; i >= 0; --i)
 		{
 			SOCKET clientSocket = _clients[i]->GetSocketfd();
@@ -45,10 +36,10 @@ bool CellServer::OnRun()
 			}
 		}
 
-		timeval t = { 1, 0 };
+		// timeval t = { 1, 0 };
 		// 第一个参数nfds是一个整数值，指fd_set集合中所有描述符(socket)的范围(即最大socket+1)
 		// windows中不需要
-		int ret = select(maxSock + 1, &fdRead, &fdWrite, &fdExp, &t);
+		int ret = select(maxSock + 1, &fdRead, NULL, NULL, NULL);
 		if (ret < 0)
 		{
 			printf("select exit\n");
@@ -66,6 +57,10 @@ bool CellServer::OnRun()
 					auto iter = _clients.begin() + i;
 					if (iter != _clients.end())
 					{
+						if (_netEvent)
+						{
+							_netEvent->OnLeave(_clients[i]);
+						}
 						delete _clients[i];
 						_clients.erase(iter);
 					}
@@ -128,12 +123,13 @@ void CellServer::OnNetMsg(SOCKET sock, DataHeader* header)
 	// 6 处理请求
 	// send 向客户端发送数据
 	++_recvCount;
-	auto t1 = _tTime.GetElapsedSecond();
+	// _netEvent->OnNetMsg(sock, header);
+	/*auto t1 = _tTime.GetElapsedSecond();
 	if (t1 >= 1.0)
 	{
 		printf("socket : %d , _recvCount : %d , time : %lf \n", sock, _recvCount, t1);
 		_tTime.Update();
-	}
+	}*/
 	switch (header->cmd)
 	{
 	case CMD_LOGIN:
@@ -197,6 +193,11 @@ int CellServer::GetRecvCount()
 void CellServer::SetRecvCount(int count)
 {
 	_recvCount = count;
+}
+
+void CellServer::SetEventObj(INetEvent* event)
+{
+	_netEvent = event;
 }
 
 void CellServer::AddClientBuff(ClientSocket* client)
@@ -337,24 +338,23 @@ int EasyTcpServer::Accept()
 
 bool EasyTcpServer::OnRun()
 {
+	if (!IsRun())
+	{
+		return false;
+	}
+
+	Time4Msg();
 	// 伯克利 socket
 	fd_set fdRead;
-	fd_set fdWrite;
-	fd_set fdExp;
 
 	FD_ZERO(&fdRead);
-	FD_ZERO(&fdWrite);
-	FD_ZERO(&fdExp);
-
 	FD_SET(_sock, &fdRead);
-	FD_SET(_sock, &fdWrite);
-	FD_SET(_sock, &fdExp);
 	SOCKET maxSock = _sock;
 
 	timeval t = { 0, 10 };
 	// 第一个参数nfds是一个整数值，指fd_set集合中所有描述符(socket)的范围(即最大socket+1)
 	// windows中不需要
-	int ret = select(maxSock + 1, &fdRead, &fdWrite, &fdExp, &t);
+	int ret = select(maxSock + 1, &fdRead, NULL, NULL, &t);
 	if (ret < 0)
 	{
 		printf("select exit\n");
@@ -446,6 +446,7 @@ void EasyTcpServer::Start()
 	{
 		auto server = new CellServer(_sock);
 		_cellServers.push_back(server);
+		server->SetEventObj(this);
 		server->Start();
 	}
 }
@@ -479,6 +480,26 @@ CellServer* EasyTcpServer::GetMinClientCellServer()
 	}
 
 	return ret;
+}
+
+void EasyTcpServer::OnLeave(ClientSocket* client)
+{
+	for (int i = static_cast<int>(_clients.size()) - 1; i >= 0; ++i)
+	{
+		if (_clients[i] == client)
+		{
+			auto iter = _clients.begin() + i;
+			if (iter != _clients.end())
+			{
+				_clients.erase(iter);
+			}
+		}
+	}
+}
+
+void EasyTcpServer::OnNetMsg(SOCKET sock, DataHeader* header)
+{
+	// Time4Msg();
 }
 #pragma endregion
 

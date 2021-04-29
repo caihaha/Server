@@ -82,6 +82,25 @@ private:
 };
 #pragma endregion
 
+#pragma region INetEvent
+class INetEvent
+{
+public:
+	INetEvent()
+	{
+	}
+	virtual ~INetEvent()
+	{
+	}
+
+	virtual void OnLeave(ClientSocket* client) = 0;
+	virtual void OnNetMsg(SOCKET sock, DataHeader* header) = 0;
+
+private:
+
+};
+#pragma endregion
+
 #pragma region CellServer
 class CellServer
 {
@@ -90,6 +109,7 @@ public:
 	{
 		_sock = sock;
 		_thread = NULL;
+		_netEvent = NULL;
 	}
 
 	~CellServer()
@@ -122,6 +142,8 @@ public:
 	int GetRecvCount();
 
 	void SetRecvCount(int count);
+
+	void SetEventObj(INetEvent* event);
 private:
 	CellServer() {}
 
@@ -136,12 +158,13 @@ private:
 	std::thread* _thread;
 	static int _recvCount;
 	CELLTimestamp _tTime;
+	INetEvent* _netEvent;
 };
 
 #pragma endregion
 
 #pragma region EasyTcpServer
-class EasyTcpServer
+class EasyTcpServer : public INetEvent
 {
 public:
 	EasyTcpServer()
@@ -188,6 +211,9 @@ public:
 	// ÏìÓ¦ÍøÂçÏûÏ¢
 	void Time4Msg();
 
+	virtual void OnLeave(ClientSocket* client);
+	virtual void OnNetMsg(SOCKET sock, DataHeader* header);
+
 private:
 
 	void AddCellServer(ClientSocket* client);
@@ -200,6 +226,8 @@ private:
 	CELLTimestamp _tTime;
 };
 #pragma endregion
+
+
 
 #endif // !_EasyTcpServer_hpp_
 

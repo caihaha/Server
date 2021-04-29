@@ -60,18 +60,25 @@ void SendThread(int id)
 	{
 		client[i]->InitSocket();
 		client[i]->Connect("127.0.0.1", 4567);
-		printf("connect count : %d\n", i);
+		printf("thread<%d>, connect count : %d\n",id, i);
 	}
 
-	Login login;
-	strcpy_s(login.userName, "CJC");
-	strcpy_s(login.PassWord, "123456");
+	std::chrono::milliseconds t(3000);
+	std::this_thread::sleep_for(t);
 
+	Login login[10];
+	for (int i = 0; i < 10; ++i)
+	{
+		strcpy_s(login[i].userName, "CJC");
+		strcpy_s(login[i].PassWord, "123456");
+	}
+
+	const int length = sizeof(login);
 	while (g_bRun)
 	{
 		for (int i = begin; i < end; ++i)
 		{
-			client[i]->SendData((const char*)(&login), login.dataLength);
+			client[i]->SendData((const char*)(&login), length);
 			/*if (!client[i]->OnRun())
 			{
 				continue;
