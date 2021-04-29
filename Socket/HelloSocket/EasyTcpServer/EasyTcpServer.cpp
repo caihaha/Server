@@ -1,11 +1,9 @@
 #include "EasyTcpServer.h"
 
 #pragma region CellServer
-int CellServer::_recvCount = 0;
-
 void CellServer::Start()
 {
-	_thread = new std::thread(std::mem_fun(&CellServer::OnRun), this);
+	_thread = std::thread(std::mem_fn(&CellServer::OnRun), this);
 }
 
 bool CellServer::OnRun()
@@ -81,7 +79,7 @@ int CellServer::RecvData(ClientSocket* client)
 	int recvLen = (int)recv(client->GetSocketfd(), szRecv, RECV_BUFF_SIZE, 0);
 	if (recvLen <= 0)
 	{
-		printf("client exit\n");
+		// printf("client exit\n");
 		return -1;
 	}
 	memcpy(msgBuf + lastPos, szRecv, recvLen);
@@ -96,7 +94,7 @@ int CellServer::RecvData(ClientSocket* client)
 		{
 			// 剩余消息缓冲区长度
 			int size = lastPos - header->dataLength;
-			OnNetMsg(client->GetSocketfd(), header);
+			OnNetMsg(client, header);
 			if (size > 0)
 			{
 				memcpy(msgBuf, msgBuf + header->dataLength, size);
@@ -118,39 +116,11 @@ int CellServer::RecvData(ClientSocket* client)
 	return 0;
 }
 
-void CellServer::OnNetMsg(SOCKET sock, DataHeader* header)
+void CellServer::OnNetMsg(ClientSocket* client, DataHeader* header)
 {
 	// 6 处理请求
 	// send 向客户端发送数据
-	++_recvCount;
-	// _netEvent->OnNetMsg(sock, header);
-	/*auto t1 = _tTime.GetElapsedSecond();
-	if (t1 >= 1.0)
-	{
-		printf("socket : %d , _recvCount : %d , time : %lf \n", sock, _recvCount, t1);
-		_tTime.Update();
-	}*/
-	switch (header->cmd)
-	{
-	case CMD_LOGIN:
-	{
-		LoginResult inRet;
-		send(sock, (char*)&inRet, sizeof(LoginResult), 0);
-		return;
-	}
-	case CMD_LOGOUT:
-	{
-		LogoutResult outRet;
-		send(sock, (char*)&outRet, sizeof(LogoutResult), 0);
-		return;
-	}
-	default:
-	{
-		DataHeader header = { 0, CMD_ERROR };
-		send(sock, (char*)&header, sizeof(header), 0);
-		printf("error cmd.\n");
-	}
-	}
+	_netEvent->OnNetMsg(client, header);
 }
 
 void CellServer::Close()
@@ -168,7 +138,6 @@ void CellServer::Close()
 	}
 	// 关闭套接字closesocket;
 	closesocket(_sock);
-	WSACleanup(); // 和WSAStartup匹配
 #else
 	for (int i = (int)_clients.size() - 1; i >= 0; --i)
 	{
@@ -178,21 +147,12 @@ void CellServer::Close()
 	close(_sock);
 #endif
 	_clients.clear();
+	_clientBuff.clear();
 }
 
 size_t CellServer::GetClientSize()
 {
 	return _clients.size() + _clientBuff.size();
-}
-
-int CellServer::GetRecvCount()
-{
-	return _recvCount;
-}
-
-void CellServer::SetRecvCount(int count)
-{
-	_recvCount = count;
 }
 
 void CellServer::SetEventObj(INetEvent* event)
@@ -327,10 +287,8 @@ int EasyTcpServer::Accept()
 	}
 	else
 	{
-		NewUserJoin userJoin;
-		SendData2All((const char*)&userJoin, userJoin.dataLength);
-		_clients.push_back(new ClientSocket(cSock));
-		printf("New Client : socket = %d, IP = %s \n", cSock, inet_ntoa(clientAddr.sin_addr));
+		// printf("New Client : socket = %d, IP = %s \n", cSock, inet_ntoa(clientAddr.sin_addr));
+		AddCellServer(new ClientSocket(cSock));
 	}
 
 	return _sock;
@@ -357,7 +315,7 @@ bool EasyTcpServer::OnRun()
 	int ret = select(maxSock + 1, &fdRead, NULL, NULL, &t);
 	if (ret < 0)
 	{
-		printf("select exit\n");
+		printf("server Accept select exit\n");
 		Close();
 		return false;
 	}
@@ -380,23 +338,12 @@ void EasyTcpServer::Close()
 	}
 
 #ifdef _WIN32
-	for (int i = (int)_clients.size() - 1; i >= 0; --i)
-	{
-		closesocket(_clients[i]->GetSocketfd());
-		delete _clients[i];
-	}
 	// 关闭套接字closesocket;
 	closesocket(_sock);
 	WSACleanup(); // 和WSAStartup匹配
 #else
-	for (int i = (int)_clients.size() - 1; i >= 0; --i)
-	{
-		close(_clients[i]->GetSocketfd());
-		delete _clients[i];
-	}
 	close(_sock);
 #endif
-	_clients.clear();
 }
 
 int EasyTcpServer::SendData(SOCKET sock, const char* data, int length)
@@ -409,51 +356,32 @@ int EasyTcpServer::SendData(SOCKET sock, const char* data, int length)
 	return SOCKET_ERROR;
 }
 
-void EasyTcpServer::SendData2All(const char* data, int length)
-{
-	if (IsRun() && data != NULL)
-	{
-		for (int i = (int)_clients.size() - 1; i >= 0; --i)
-		{
-			if (SendData(_clients[i]->GetSocketfd(), data, length) == SOCKET_ERROR)
-			{
-				printf("send data error. socket : %d", _clients[i]->GetSocketfd());
-			}
-		}
-	}
-}
-
 void EasyTcpServer::Time4Msg()
 {
 	auto t1 = _tTime.GetElapsedSecond();
 	if (t1 >= 1.0)
 	{
-		int recvCount = 0;
-		for (auto server : _cellServers)
-		{
-			recvCount += server->GetRecvCount();
-			server->SetRecvCount(0);
-		}
-
-		printf("socket : %d , _recvCount : %d , time : %lf \n", _sock, recvCount, (recvCount / t1));
+		printf("socket : %d , _recvCount : %d , time : %lf \n", _sock, (int)_msgCount, ((int)_msgCount / t1));
+		_msgCount = 0;
 		_tTime.Update();
 	}
 }
 
-void EasyTcpServer::Start()
+void EasyTcpServer::Start(const int threadCpunt)
 {
-	for (int i = 0; i < __CELL_SERVER_COUNT; ++i)
+	for (int i = 0; i < threadCpunt; ++i)
 	{
 		auto server = new CellServer(_sock);
 		_cellServers.push_back(server);
+		// 注册事件
 		server->SetEventObj(this);
+		// 启动消息处理线程
 		server->Start();
 	}
 }
 
 void EasyTcpServer::AddCellServer(ClientSocket* client)
 {
-	_clients.push_back(client);
 	auto server = GetMinClientCellServer();
 	if (server == NULL)
 	{
@@ -461,6 +389,7 @@ void EasyTcpServer::AddCellServer(ClientSocket* client)
 	}
 
 	server->AddClientBuff(client);
+	OnJoin(client);
 }
 
 CellServer* EasyTcpServer::GetMinClientCellServer()
@@ -482,24 +411,20 @@ CellServer* EasyTcpServer::GetMinClientCellServer()
 	return ret;
 }
 
-void EasyTcpServer::OnLeave(ClientSocket* client)
+void EasyTcpServer::OnJoin(ClientSocket* client)
 {
-	for (int i = static_cast<int>(_clients.size()) - 1; i >= 0; ++i)
-	{
-		if (_clients[i] == client)
-		{
-			auto iter = _clients.begin() + i;
-			if (iter != _clients.end())
-			{
-				_clients.erase(iter);
-			}
-		}
-	}
+	++_clientCount;
 }
 
-void EasyTcpServer::OnNetMsg(SOCKET sock, DataHeader* header)
+
+void EasyTcpServer::OnLeave(ClientSocket* client)
 {
-	// Time4Msg();
+	--_clientCount;
+}
+
+void EasyTcpServer::OnNetMsg(ClientSocket* client, DataHeader* header)
+{
+	++_msgCount;
 }
 #pragma endregion
 

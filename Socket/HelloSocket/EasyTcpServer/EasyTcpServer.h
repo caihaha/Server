@@ -17,8 +17,9 @@
 #define SOCKET_ERROR (-1)
 #endif
 
+#ifndef RECV_BUFF_SIZE
 #define RECV_BUFF_SIZE 10240
-#define __CELL_SERVER_COUNT 4
+#endif // !RECV_BUFF_SIZE
 
 #include <stdio.h>
 #include<stdlib.h>
@@ -67,22 +68,28 @@ public:
 		_lastPos = pos;
 	}
 
-	bool operator==(const ClientSocket& var)
+	int SendData(const char* data, int length)
 	{
-		return var._sockfd == _sockfd;
+		if (data != NULL)
+		{
+			return send(_sockfd, data, length, 0);
+		}
+
+		return SOCKET_ERROR;
 	}
 private:
 	SOCKET _sockfd; // socket fd_set file desc set
 	// 接收缓冲区
 	char _szRecv[RECV_BUFF_SIZE] = {};
 	// 二级缓冲区
-	char _szMsgBuf[RECV_BUFF_SIZE * 10] = {};
+	char _szMsgBuf[RECV_BUFF_SIZE * 5] = {};
 
 	int _lastPos = 0;
 };
 #pragma endregion
 
 #pragma region INetEvent
+// 事件处理
 class INetEvent
 {
 public:
@@ -93,8 +100,12 @@ public:
 	{
 	}
 
+	// 客户端加入事件
+	virtual void OnJoin(ClientSocket* client) = 0;
+	// 客户端离开事件
 	virtual void OnLeave(ClientSocket* client) = 0;
-	virtual void OnNetMsg(SOCKET sock, DataHeader* header) = 0;
+	// 客户端消息时间
+	virtual void OnNetMsg(ClientSocket* client, DataHeader* header) = 0;
 
 private:
 
@@ -108,7 +119,6 @@ public:
 	CellServer(const SOCKET sock)
 	{
 		_sock = sock;
-		_thread = NULL;
 		_netEvent = NULL;
 	}
 
@@ -128,7 +138,7 @@ public:
 	int RecvData(ClientSocket* client);
 
 	// 响应网络消息
-	void OnNetMsg(SOCKET sock, DataHeader* header);
+	void OnNetMsg(ClientSocket* client, DataHeader* header);
 
 	// 关闭socket
 	void Close();
@@ -138,10 +148,6 @@ public:
 	void ClearClientBuff();
 
 	size_t GetClientSize();
-
-	int GetRecvCount();
-
-	void SetRecvCount(int count);
 
 	void SetEventObj(INetEvent* event);
 private:
@@ -155,8 +161,7 @@ private:
 	std::vector<ClientSocket*> _clientBuff;
 
 	std::mutex _mutex;
-	std::thread* _thread;
-	static int _recvCount;
+	std::thread _thread;
 	CELLTimestamp _tTime;
 	INetEvent* _netEvent;
 };
@@ -170,6 +175,8 @@ public:
 	EasyTcpServer()
 	{
 		_sock = INVALID_SOCKET;
+		_msgCount = 0;
+		_clientCount = 0;
 	}
 	~EasyTcpServer()
 	{
@@ -188,7 +195,7 @@ public:
 	int Listen(int linkCnt);
 
 	// 开启多线程
-	void Start();
+	void Start(const int threadCpunt);
 
 	// 接受客户端连接
 	int Accept();
@@ -198,7 +205,6 @@ public:
 
 	// 发送数据
 	int SendData(SOCKET _cSock, const char* data, int length);
-	void SendData2All(const char* data, int length);
 
 	// 接受数据
 	// int RecvData(ClientSocket* client);
@@ -211,9 +217,11 @@ public:
 	// 响应网络消息
 	void Time4Msg();
 
-	virtual void OnLeave(ClientSocket* client);
-	virtual void OnNetMsg(SOCKET sock, DataHeader* header);
+	virtual void OnJoin(ClientSocket* client);
 
+	virtual void OnLeave(ClientSocket* client);
+
+	virtual void OnNetMsg(ClientSocket* client, DataHeader* header);
 private:
 
 	void AddCellServer(ClientSocket* client);
@@ -221,13 +229,15 @@ private:
 	CellServer* GetMinClientCellServer();
 private:
 	SOCKET _sock;
-	std::vector<ClientSocket*> _clients;
+	// 多线程处理客户端消息
 	std::vector<CellServer*> _cellServers;
 	CELLTimestamp _tTime;
+
+protected:
+	std::atomic_int _clientCount;
+	std::atomic_int _msgCount;
 };
 #pragma endregion
-
-
 
 #endif // !_EasyTcpServer_hpp_
 

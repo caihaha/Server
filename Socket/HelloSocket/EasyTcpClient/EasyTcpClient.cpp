@@ -48,7 +48,8 @@ int EasyTcpClient::Connect(const char *ip, unsigned short port)
 	}
 	else
 	{
-		printf("socket : %d connect success\n", _sock);
+		_isConnect = true;
+		// printf("socket : %d connect success\n", _sock);
 	}
 	return ret;
 }
@@ -66,6 +67,8 @@ void EasyTcpClient::Close()
 #else
 	close(_sock);
 #endif
+
+	_isConnect = false;
 }
 
 bool EasyTcpClient::OnRun()
@@ -186,10 +189,16 @@ void EasyTcpClient::OnNetMsg(DataHeader *header)
 
 int EasyTcpClient::SendData(const char* data, int length)
 {
+	int ret = SOCKET_ERROR;
 	if (IsRun() && data != NULL)
 	{
-		return send(_sock, data, length, 0);
+		ret = send(_sock, data, length, 0);
 	}
 
-	return SOCKET_ERROR;
+	if (ret == SOCKET_ERROR)
+	{
+		Close();
+	}
+
+	return ret;
 }

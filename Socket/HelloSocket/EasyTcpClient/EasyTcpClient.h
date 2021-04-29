@@ -17,7 +17,9 @@
 #define SOCKET_ERROR (-1)
 #endif
 
+#ifndef RECV_BUFF_SIZE
 #define RECV_BUFF_SIZE 10240
+#endif // !RECV_BUFF_SIZE
 
 #include <stdio.h>
 #include <thread>
@@ -31,6 +33,8 @@ public:
 	EasyTcpClient()
 	{
 		_sock = INVALID_SOCKET;
+		_isConnect = false;
+		_lastPos = 0;
 	}
 	virtual ~EasyTcpClient()
 	{
@@ -56,7 +60,7 @@ public:
 	// 处理网络消息
 	bool OnRun();
 
-	bool IsRun() { return _sock != INVALID_SOCKET; }
+	bool IsRun() { return _sock != INVALID_SOCKET && _isConnect; }
 
 	// 响应网络消息
 	void OnNetMsg(DataHeader* header);
@@ -65,9 +69,11 @@ private:
 	// 接收缓冲区
 	char _szRecv[RECV_BUFF_SIZE] = {};
 	// 二级缓冲区
-	char _szMsgBuf[RECV_BUFF_SIZE * 10] = {};
+	char _szMsgBuf[RECV_BUFF_SIZE * 5] = {};
 
-	int _lastPos = 0;
+	int _lastPos;
+
+	bool _isConnect;
 };
 #pragma endregion
 
