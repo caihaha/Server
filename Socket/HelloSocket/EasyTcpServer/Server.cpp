@@ -65,13 +65,13 @@ void MyServer::OnNetMsg(ClientSocket* client, DataHeader* header)
 	{
 		LoginResult inRet;
 		send(sock, (char*)&inRet, sizeof(LoginResult), 0);
-		return;
+		break;
 	}
 	case CMD_LOGOUT:
 	{
 		LogoutResult outRet;
 		send(sock, (char*)&outRet, sizeof(LogoutResult), 0);
-		return;
+		break;
 	}
 	default:
 	{

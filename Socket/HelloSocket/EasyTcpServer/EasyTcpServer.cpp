@@ -8,11 +8,12 @@ void CellServer::Start()
 
 bool CellServer::OnRun()
 {
+	_isFdReadChange = true;
 	while (IsRun())
 	{
 		AddClientFromBuff();
 
-		if (_clients.empty())
+		if (_sock2Clients.empty())
 		{
 			std::chrono::milliseconds t(1);
 			std::this_thread::sleep_for(t);
@@ -24,14 +25,23 @@ bool CellServer::OnRun()
 		FD_ZERO(&fdRead);
 
 		SOCKET maxSock = _sock;
-		for (int i = _clients.size() - 1; i >= 0; --i)
+		if (_isFdReadChange)
 		{
-			SOCKET clientSocket = _clients[i]->GetSocketfd();
-			FD_SET(clientSocket, &fdRead);
-			if (clientSocket > maxSock)
+			for (auto& iter : _sock2Clients)
 			{
-				maxSock = clientSocket;
+				SOCKET clientSocket = iter.first;
+				FD_SET(clientSocket, &fdRead);
+				if (clientSocket > maxSock)
+				{
+					maxSock = clientSocket;
+				}
 			}
+			memcpy_s(&_clientFdRead, (size_t)sizeof(_clientFdRead), &fdRead, (size_t)sizeof(fd_set));
+			_isFdReadChange = false;
+		}
+		else
+		{
+			memcpy_s(&fdRead, (size_t)sizeof(fd_set), &_clientFdRead, (size_t)sizeof(_clientFdRead));
 		}
 
 		// timeval t = { 1, 0 };
@@ -45,26 +55,44 @@ bool CellServer::OnRun()
 			return false;
 		}
 
-		for (int i = (int)_clients.size() - 1; i >= 0; --i)
+#ifdef _WIN32
+		for (int i = 0; i < fdRead.fd_count; ++i)
 		{
-			SOCKET clientSocket = _clients[i]->GetSocketfd();
-			if (FD_ISSET(clientSocket, &fdRead))
+			auto iter = _sock2Clients.find(fdRead.fd_array[i]);
+			if (iter != _sock2Clients.end())
 			{
-				if (-1 == RecvData(_clients[i]))
+				if (-1 == RecvData(iter->second))
 				{
-					auto iter = _clients.begin() + i;
-					if (iter != _clients.end())
+					_isFdReadChange = true;
+
+					if (_netEvent)
 					{
-						if (_netEvent)
-						{
-							_netEvent->OnLeave(_clients[i]);
-						}
-						delete _clients[i];
-						_clients.erase(iter);
+						_netEvent->OnLeave(iter->second);
 					}
+					delete iter->second;
+					_sock2Clients.erase(iter->first);
 				}
 			}
 		}
+#else
+		for (auto iter = _sock2Clients.rbegin(); iter != _sock2Clients.rend(); ++iter)
+		{
+			if (FD_ISSET(iter->first, &fdRead))
+			{
+				if (-1 == RecvData(iter->second))
+				{
+					_isFdReadChange = true;
+
+					if (_netEvent)
+					{
+						_netEvent->OnLeave(iter->second);
+					}
+					delete iter->second;
+					_sock2Clients.erase(iter->first);
+				}
+			}
+		}
+#endif // _WIN32
 	}
 
 	return true;
@@ -131,28 +159,28 @@ void CellServer::Close()
 	}
 
 #ifdef _WIN32
-	for (int i = (int)_clients.size() - 1; i >= 0; --i)
+	for (auto iter = _sock2Clients.rbegin(); iter != _sock2Clients.rend(); ++iter)
 	{
-		closesocket(_clients[i]->GetSocketfd());
-		delete _clients[i];
+		closesocket(iter->first);
+		delete iter->second;
 	}
 	// ¹Ø±ÕÌ×½Ó×Öclosesocket;
 	closesocket(_sock);
 #else
-	for (int i = (int)_clients.size() - 1; i >= 0; --i)
+	for (auto iter = _sock2Clients.rbegin(); iter != _sock2Clients.rend(); ++iter)
 	{
-		close(_clients[i]->GetSocketfd());
-		delete _clients[i];
+		close(iter->first);
+		delete iter->second;
 	}
 	close(_sock);
 #endif
-	_clients.clear();
+	_sock2Clients.clear();
 	_clientBuff.clear();
 }
 
 size_t CellServer::GetClientSize()
 {
-	return _clients.size() + _clientBuff.size();
+	return _sock2Clients.size() + _clientBuff.size();
 }
 
 void CellServer::SetEventObj(INetEvent* event)
@@ -182,9 +210,10 @@ void CellServer::AddClientFromBuff()
 	std::lock_guard<std::mutex> lg(_mutex);
 	for (auto client : _clientBuff)
 	{
-		_clients.push_back(client);
+		_sock2Clients[client->GetSocketfd()] = client;
 	}
 	_clientBuff.clear();
+	_isFdReadChange = true;
 }
 #pragma endregion
 

@@ -28,6 +28,7 @@
 #include <mutex>
 #include <functional>
 #include <atomic>
+#include <map>
 
 #include "DataDef.hpp"
 #include "CELLTimestamp.hpp"
@@ -120,6 +121,8 @@ public:
 	{
 		_sock = sock;
 		_netEvent = NULL;
+		_isFdReadChange = false;
+		FD_ZERO(&_clientFdRead);
 	}
 
 	~CellServer()
@@ -156,7 +159,7 @@ private:
 	void AddClientFromBuff();
 private:
 	SOCKET _sock;
-	std::vector<ClientSocket*> _clients;
+	std::map<SOCKET, ClientSocket*> _sock2Clients;
 	// ª∫≥Â∂”¡–
 	std::vector<ClientSocket*> _clientBuff;
 
@@ -164,6 +167,9 @@ private:
 	std::thread _thread;
 	CELLTimestamp _tTime;
 	INetEvent* _netEvent;
+
+	fd_set _clientFdRead;
+	bool _isFdReadChange;
 };
 
 #pragma endregion
