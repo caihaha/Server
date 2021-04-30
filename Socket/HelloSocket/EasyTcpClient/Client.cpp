@@ -113,6 +113,11 @@ int main()
 		t.detach();
 	}
 
+	while (g_bRun)
+	{
+		Sleep(100);
+	}
+
 	printf("all client exit\n");
 	getchar();
     return 0;
