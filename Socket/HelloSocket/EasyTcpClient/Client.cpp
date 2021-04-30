@@ -113,9 +113,16 @@ int main()
 		t.detach();
 	}
 
+	CELLTimestamp tTime;
 	while (g_bRun)
 	{
-		Sleep(100);
+		auto t = tTime.GetElapsedSecond();
+		if (t >= 1.0)
+		{
+			printf("thread<%d>, clients<%d>, time<%lf>\n", tCount, cCount, t);
+			tTime.Update();
+		}
+		Sleep(1);
 	}
 
 	printf("all client exit\n");

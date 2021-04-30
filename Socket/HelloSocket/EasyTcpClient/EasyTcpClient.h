@@ -25,6 +25,7 @@
 #include <thread>
 
 #include "DataDef.hpp"
+#include "CELLTimestamp.hpp"
 
 #pragma region EasyTcpClient
 class EasyTcpClient
