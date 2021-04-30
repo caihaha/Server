@@ -44,7 +44,7 @@ bool CellServer::OnRun()
 			memcpy_s(&fdRead, (size_t)sizeof(fd_set), &_clientFdRead, (size_t)sizeof(_clientFdRead));
 		}
 
-		// timeval t = { 1, 0 };
+		// timeval t = { 0, 0 };
 		// 第一个参数nfds是一个整数值，指fd_set集合中所有描述符(socket)的范围(即最大socket+1)
 		// windows中不需要
 		int ret = select(maxSock + 1, &fdRead, NULL, NULL, NULL);
@@ -53,6 +53,10 @@ bool CellServer::OnRun()
 			printf("select exit\n");
 			Close();
 			return false;
+		}
+		else if (ret == 0)
+		{
+			continue;
 		}
 
 #ifdef _WIN32

@@ -1,5 +1,5 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(504,5): warning MSB8004: Intermediate 目录未以斜杠结尾。  此生成实例将添加斜杠，因为必须有这个斜杠才能正确计算 Intermediate 目录。
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(505,5): warning MSB8004: Output 目录未以斜杠结尾。  此生成实例将添加斜杠，因为必须有这个斜杠才能正确计算 Output 目录。
   Server.cpp
-E:\Project\myproject\Server\Socket\HelloSocket\EasyTcpServer\EasyTcpServer.cpp(59,21): warning C4018: “<”: 有符号/无符号不匹配
+E:\Project\myproject\Server\Socket\HelloSocket\EasyTcpServer\EasyTcpServer.cpp(63,21): warning C4018: “<”: 有符号/无符号不匹配
   EasyTcpServer.vcxproj -> E:\Project\myproject\Server\Socket\bin\Win32\Debug\EasyTcpServer.exe
