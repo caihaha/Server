@@ -10,11 +10,11 @@ class   MemoryAlloc;
 class	MemoryBlock
 {
 public:
-    size_t		    nRef;
-    MemoryAlloc*    pAlloc;
-    MemoryBlock*	pNext;
-    bool			bPool;
-    char			cReserver1;
+    size_t		    nRef;        // 引用计数  
+    MemoryAlloc*    pAlloc;      // 分配器指针，块链表指针
+    MemoryBlock*	pNext;       // 下一个块
+    bool			bPool;       // 是否在内存池中(用内存池分配还是系统分配的)
+    char			cReserver1;  // 保留变量，主要用来做内存对其
     char			cReserver2;
     char			cReserver3;
 };
@@ -52,7 +52,7 @@ public:
         *	
         */
         if (m_pHeader == 0)
-        {
+        {   // 系统默认分配 
             pReturn         =   (MemoryBlock*)(::malloc(nSize + sizeof(MemoryBlock)));
 	        pReturn->bPool  =   false;
 	        pReturn->nRef   =   1;
@@ -80,7 +80,7 @@ public:
     void    freeMemory(void* pMem)
     {
         char*       pCh     =   (char*)pMem;
-        MemoryBlock*pMap	=	(MemoryBlock*)((char*)(pCh - sizeof(MemoryBlock)));
+        MemoryBlock*pMap	=	(MemoryBlock*)((char*)(pCh - sizeof(MemoryBlock))); // 向前便宜到链表头
         /**
         *   ref
         */
@@ -89,7 +89,7 @@ public:
             return;
         }
         if (!pMap->bPool)
-        {
+        {   // 不在内存池中
             ::free(pMap);
             return;
         }
