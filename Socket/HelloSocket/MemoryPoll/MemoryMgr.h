@@ -14,7 +14,7 @@ public:
     MemoryAlloc*    pAlloc;      // 分配器指针，块链表指针
     MemoryBlock*	pNext;       // 下一个块
     bool			bPool;       // 是否在内存池中(用内存池分配还是系统分配的)
-    char			cReserver1;  // 保留变量，主要用来做内存对其
+    char			cReserver1;  // 保留变量，主要用来做内存对齐
     char			cReserver2;
     char			cReserver3;
 };

@@ -40,6 +40,7 @@ const int cCount = 8;
 const int tCount = 4;
 const int count = cCount / tCount;
 EasyTcpClient* client[cCount];
+std::atomic_int readyCount = 0;
 
 void SendThread(const int id)
 {
@@ -66,8 +67,13 @@ void SendThread(const int id)
 
 	printf("thread <%d> , begin : %d, end : %d\n",id, begin, end);
 
-	std::chrono::milliseconds t(3000);
-	std::this_thread::sleep_for(t);
+	// 等待所有线程都准备好
+	++readyCount;
+	while (readyCount < tCount)
+	{
+		std::chrono::milliseconds t(10);
+		std::this_thread::sleep_for(t);
+	}
 
 	Login login[10];
 	for (int i = 0; i < 10; ++i)
