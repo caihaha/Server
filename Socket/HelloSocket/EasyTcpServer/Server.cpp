@@ -1,6 +1,7 @@
+#pragma once
+
 #include "EasyTcpServer.h"
 #include "EasyTcpServer.cpp"
-#pragma once
 
 bool g_bRun = true;
 
@@ -45,19 +46,21 @@ private:
 
 void MyServer::OnJoin(ClientSocket* client)
 {
-	++_clientCount;
+	EasyTcpServer::OnJoin(client);
 	printf("client join, socket %d\n", client->GetSocketfd());
 }
 
 
 void MyServer::OnLeave(ClientSocket* client)
 {
-	--_clientCount;
+	EasyTcpServer::OnLeave(client);
 	printf("client leave, socket %d\n", client->GetSocketfd());
 }
 
 void MyServer::OnNetMsg(ClientSocket* client, DataHeader* header)
 {
+	EasyTcpServer::OnNetMsg(client, header);
+
 	SOCKET sock = client->GetSocketfd();
 	switch (header->cmd)
 	{
@@ -80,8 +83,6 @@ void MyServer::OnNetMsg(ClientSocket* client, DataHeader* header)
 		printf("error cmd.\n");
 	}
 	}
-
-	++_msgCount;
 }
 
 int main()

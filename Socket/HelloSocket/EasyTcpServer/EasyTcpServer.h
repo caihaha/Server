@@ -1,3 +1,4 @@
+#pragma once
 #ifndef _EasyTcpServer_hpp_
 #define _EasyTcpServer_hpp_
 
@@ -36,6 +37,7 @@
 
 #include "DataDef.hpp"
 #include "CELLTimestamp.hpp"
+#include "CELLTask.h"
 
 #pragma region ClientSocket
 class ClientSocket
@@ -147,6 +149,27 @@ private:
 };
 #pragma endregion
 
+#pragma region CellSendMsgTask
+class CellSendMsgTask : public CellTask
+{
+public:
+	CellSendMsgTask(ClientSocket* client, DataHeader* header)
+	{
+		_client = client;
+		_header = header;
+	}
+	virtual ~CellSendMsgTask()
+	{
+	}
+
+	void DoTask();
+private:
+	ClientSocket* _client;
+	DataHeader* _header;
+};
+
+#pragma endregion
+
 #pragma region CellServer
 class CellServer
 {
@@ -187,6 +210,8 @@ public:
 	size_t GetClientSize();
 
 	void SetEventObj(INetEvent* event);
+
+	void AddSendTask(CellTask task);
 private:
 	CellServer() {}
 
@@ -204,6 +229,8 @@ private:
 
 	fd_set _clientFdRead;
 	bool _isFdReadChange;
+
+	CellTaskServer _taskServer;
 };
 
 #pragma endregion

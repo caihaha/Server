@@ -4,6 +4,7 @@
 void CellServer::Start()
 {
 	_thread = std::thread(std::mem_fn(&CellServer::OnRun), this);
+	_taskServer.Start();
 }
 
 bool CellServer::OnRun()
@@ -219,6 +220,12 @@ void CellServer::AddClientFromBuff()
 	_clientBuff.clear();
 	_isFdReadChange = true;
 }
+
+void CellServer::AddSendTask(CellTask task)
+{
+	_taskServer.AddTaskToBuf(&task);
+}
+
 #pragma endregion
 
 #pragma region EasyTcpServer
@@ -448,6 +455,30 @@ void EasyTcpServer::OnLeave(ClientSocket* client)
 void EasyTcpServer::OnNetMsg(ClientSocket* client, DataHeader* header)
 {
 	++_msgCount;
+}
+#pragma endregion
+
+#pragma region CellSendMsgTask
+void CellSendMsgTask::DoTask()
+{
+	if (_header == nullptr)
+	{
+		return;
+	}
+
+	switch (_header->cmd)
+	{
+	case CMD_LOGIN :
+		_client->SendData((const char*)((Login*)_header), _header->dataLength);
+		break;
+	case CMD_LOGOUT:
+		_client->SendData((const char*)((Logout*)_header), _header->dataLength);
+		break;
+	default:
+		break;
+	}
+
+	delete _header;
 }
 #pragma endregion
 

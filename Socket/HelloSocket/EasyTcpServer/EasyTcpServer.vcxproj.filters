@@ -18,6 +18,9 @@
     <ClCompile Include="Server.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="CELLTask.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DataDef.hpp">
@@ -30,6 +33,9 @@
       <Filter>源文件</Filter>
     </ClInclude>
     <ClInclude Include="EasyTcpServer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CELLTask.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

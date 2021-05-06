@@ -147,9 +147,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CELLTask.cpp" />
     <ClCompile Include="Server.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CELLTask.h" />
     <ClInclude Include="CELLTimestamp.hpp" />
     <ClInclude Include="DataDef.hpp" />
     <ClInclude Include="EasyTcpServer.h" />
