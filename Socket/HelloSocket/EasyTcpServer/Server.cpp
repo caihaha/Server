@@ -64,19 +64,19 @@ void MyServer::OnNetMsg(ClientSocket* client, DataHeader* header)
 	case CMD_LOGIN:
 	{
 		LoginResult inRet;
-		send(sock, (char*)&inRet, sizeof(LoginResult), 0);
+		client->SendData((const char*)&inRet, inRet.dataLength);
 		break;
 	}
 	case CMD_LOGOUT:
 	{
 		LogoutResult outRet;
-		send(sock, (char*)&outRet, sizeof(LogoutResult), 0);
+		client->SendData((const char*)&outRet, outRet.dataLength);
 		break;
 	}
 	default:
 	{
-		DataHeader header = { 0, CMD_ERROR };
-		send(sock, (char*)&header, sizeof(header), 0);
+		DataHeader error = { 0, CMD_ERROR };
+		client->SendData((const char*)&error, error.dataLength);
 		printf("error cmd.\n");
 	}
 	}

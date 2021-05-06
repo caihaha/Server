@@ -379,16 +379,6 @@ void EasyTcpServer::Close()
 #endif
 }
 
-int EasyTcpServer::SendData(SOCKET sock, const char* data, int length)
-{
-	if (IsRun() && data != NULL)
-	{
-		return send(sock, data, length, 0);
-	}
-
-	return SOCKET_ERROR;
-}
-
 void EasyTcpServer::Time4Msg()
 {
 	auto t1 = _tTime.GetElapsedSecond();

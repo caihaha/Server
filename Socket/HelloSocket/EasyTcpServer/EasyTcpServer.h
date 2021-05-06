@@ -21,6 +21,10 @@
 #define RECV_BUFF_SIZE 10240
 #endif // !RECV_BUFF_SIZE
 
+#ifndef SEND_BUFF_SIZE
+#define SEND_BUFF_SIZE 10240
+#endif // !SEND_BUFF_SIZE
+
 #include <stdio.h>
 #include<stdlib.h>
 #include <vector>
@@ -42,6 +46,9 @@ public:
 		_sockfd = sockfd;
 		memset(_szMsgBuf, 0, sizeof(_szMsgBuf));
 		_lastPos = 0;
+
+		memset(_szSendMsgBuf, 0, sizeof(_szSendMsgBuf));
+		_lastSendPos = 0;
 	}
 
 	const SOCKET GetSocketfd() const
@@ -71,21 +78,48 @@ public:
 
 	int SendData(const char* data, int length)
 	{
-		if (data != NULL)
+		if (data == NULL)
 		{
-			return send(_sockfd, data, length, 0);
+			return SOCKET_ERROR;
 		}
 
-		return SOCKET_ERROR;
+		int ret = SOCKET_ERROR;
+		while (_lastSendPos + length >= SEND_BUFF_SIZE)
+		{
+			const int nCpyLen = SEND_BUFF_SIZE - _lastSendPos;
+			memcpy_s(_szSendMsgBuf + _lastSendPos, sizeof(_szSendMsgBuf) - _lastSendPos, data, nCpyLen);
+			data += nCpyLen;
+			length -= nCpyLen;
+			_lastSendPos = 0;
+
+			ret = send(_sockfd, data, length, 0);
+			if (SOCKET_ERROR == ret)
+			{
+				return ret;
+			}
+		}
+
+		if (length > 0)
+		{
+			memcpy_s(_szSendMsgBuf + _lastSendPos, sizeof(_szSendMsgBuf) - _lastSendPos, data, length);
+			_lastSendPos += length;
+		}
+
+		return ret;
 	}
 private:
 	SOCKET _sockfd; // socket fd_set file desc set
 	// 接收缓冲区
 	char _szRecv[RECV_BUFF_SIZE] = {};
-	// 二级缓冲区
-	char _szMsgBuf[RECV_BUFF_SIZE * 5] = {};
+	// 消息接收缓冲区
+	char _szMsgBuf[RECV_BUFF_SIZE] = {};
 
 	int _lastPos = 0;
+
+	// 消息发送缓冲区
+	char _szSendMsgBuf[SEND_BUFF_SIZE] = {};
+
+	int _lastSendPos = 0;
 };
 #pragma endregion
 
@@ -208,9 +242,6 @@ public:
 
 	// 关闭socket
 	void Close();
-
-	// 发送数据
-	int SendData(SOCKET _cSock, const char* data, int length);
 
 	// 接受数据
 	// int RecvData(ClientSocket* client);
