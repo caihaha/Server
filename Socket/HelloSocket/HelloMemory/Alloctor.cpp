@@ -1,32 +1,32 @@
-#include "Alloctor.h"
-#include <stdlib.h>
+#include"Alloctor.h"
+#include"MemoryMgr.h"
 
-void* operator new(size_t size)
+void* operator new(size_t nSize)
 {
-    return malloc(size);
+	return MemoryMgr::Instance().allocMem(nSize);
 }
 
-void operator delete(void *p)
+void operator delete(void* p)
 {
-    free(p);
+	MemoryMgr::Instance().freeMem(p);
 }
 
-void* operator new[](size_t size)
+void* operator new[](size_t nSize)
 {
-    return malloc(size);
+	return MemoryMgr::Instance().allocMem(nSize);
 }
 
 void operator delete[](void* p)
 {
-    free(p);
+	MemoryMgr::Instance().freeMem(p);
 }
 
 void* mem_alloc(size_t size)
 {
-    return malloc(size);
+	return malloc(size);
 }
 
 void mem_free(void* p)
 {
-    free(p);
+	free(p);
 }
