@@ -71,6 +71,7 @@ public:
 		MemoryBlock* pReturn = nullptr;
 		if (nullptr == _pHeader)
 		{
+			// 没有内存
 			pReturn = (MemoryBlock*)malloc(nSize + sizeof(MemoryBlock));
 			pReturn->bPool = false;
 			pReturn->nID = -1;
@@ -88,7 +89,10 @@ public:
 		return ((char*)pReturn + sizeof(MemoryBlock));
 	}
 
-	//释放内存
+	// 释放内存
+	//  ___________ _________________
+	// |___________|_________________|
+	// |MemoryBlock| 用户传过来的pMem|
 	void freeMemory(void* pMem)
 	{
 		MemoryBlock* pBlock = (MemoryBlock*)((char*)pMem - sizeof(MemoryBlock));
