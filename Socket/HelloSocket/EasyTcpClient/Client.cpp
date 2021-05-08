@@ -36,8 +36,8 @@ void CmdThread()
 	}
 }
 
-const int cCount = 8;
-const int tCount = 4;
+const int cCount = 1;
+const int tCount = 1;
 const int count = cCount / tCount;
 EasyTcpClient* client[cCount];
 std::atomic_int readyCount = 0;

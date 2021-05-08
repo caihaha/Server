@@ -78,7 +78,7 @@ void MyServer::OnNetMsg(CellClient* client, DataHeader* header)
 	}
 	default:
 	{
-		DataHeader error = { 0, CMD_ERROR };
+		DataHeader error = { CMD_ERROR, sizeof(DataHeader) };
 		client->SendData((const char*)&error, error.dataLength);
 		printf("error cmd.\n");
 	}
@@ -91,7 +91,7 @@ int main()
 	server.InitSocket();
 	server.Bind(NULL, 4567);
 	server.Listen(5);
-	server.Start(4);
+	server.Start(1);
 
 	std::thread t1(CmdThread);
 	t1.detach();

@@ -27,7 +27,7 @@
 #endif // !RECV_BUFF_SIZE
 
 #ifndef SEND_BUFF_SIZE
-#define SEND_BUFF_SIZE 10240
+#define SEND_BUFF_SIZE 512
 #endif // !SEND_BUFF_SIZE
 
 #endif // !_SERVER_DEFS_H_

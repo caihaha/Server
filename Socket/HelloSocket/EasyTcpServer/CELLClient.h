@@ -55,12 +55,12 @@ public:
 		while (_lastSendPos + length >= SEND_BUFF_SIZE)
 		{
 			const int nCpyLen = SEND_BUFF_SIZE - _lastSendPos;
-			memcpy_s(_szSendMsgBuf + _lastSendPos, sizeof(_szSendMsgBuf) - _lastSendPos, data, nCpyLen);
+			memcpy(_szSendMsgBuf + _lastSendPos, data, nCpyLen);
 			data += nCpyLen;
 			length -= nCpyLen;
 			_lastSendPos = 0;
 
-			ret = send(_sockfd, data, length, 0);
+			ret = send(_sockfd, _szSendMsgBuf, SEND_BUFF_SIZE, 0);
 			if (SOCKET_ERROR == ret)
 			{
 				return ret;
@@ -69,10 +69,11 @@ public:
 
 		if (length > 0)
 		{
-			memcpy_s(_szSendMsgBuf + _lastSendPos, sizeof(_szSendMsgBuf) - _lastSendPos, data, length);
+			memcpy(_szSendMsgBuf + _lastSendPos, data, length);
 			_lastSendPos += length;
+			int i = 0;
 		}
-
+		// ret = send(_sockfd, data, length, 0);
 		return ret;
 	}
 private:
