@@ -147,15 +147,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CELLServer.cpp" />
     <ClCompile Include="CELLTask.cpp" />
     <ClCompile Include="Server.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CELLClient.h" />
+    <ClInclude Include="CELLServer.h" />
     <ClInclude Include="CELLTask.h" />
     <ClInclude Include="CELLTimestamp.hpp" />
     <ClInclude Include="DataDef.hpp" />
     <ClInclude Include="EasyTcpServer.h" />
     <ClInclude Include="EasyTcpServer.cpp" />
+    <ClInclude Include="INetEvent.h" />
+    <ClInclude Include="ServerDefs.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

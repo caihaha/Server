@@ -2,30 +2,6 @@
 #ifndef _EasyTcpServer_hpp_
 #define _EasyTcpServer_hpp_
 
-#ifdef _WIN32
-#define FD_SETSIZE 1024
-#define WIN32_LEAN_AND_MEAN
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-#include <WinSock2.h>
-#include <windows.h>
-#pragma comment(lib, "ws2_32.lib")
-#else
-#include <unistd>
-#include <arpa/inet.h>
-#include <string.h>
-#define SOCKET int
-#define INVALID_SOCKET  (SOCKET)(0)
-#define SOCKET_ERROR (-1)
-#endif
-
-#ifndef RECV_BUFF_SIZE
-#define RECV_BUFF_SIZE 10240
-#endif // !RECV_BUFF_SIZE
-
-#ifndef SEND_BUFF_SIZE
-#define SEND_BUFF_SIZE 10240
-#endif // !SEND_BUFF_SIZE
-
 #include <stdio.h>
 #include<stdlib.h>
 #include <vector>
@@ -35,125 +11,16 @@
 #include <atomic>
 #include <map>
 
-#include "DataDef.hpp"
-#include "CELLTimestamp.hpp"
-#include "CELLTask.h"
-
-#pragma region ClientSocket
-class ClientSocket
-{
-public:
-	ClientSocket(const SOCKET sockfd)
-	{
-		_sockfd = sockfd;
-		memset(_szMsgBuf, 0, sizeof(_szMsgBuf));
-		_lastPos = 0;
-
-		memset(_szSendMsgBuf, 0, sizeof(_szSendMsgBuf));
-		_lastSendPos = 0;
-	}
-
-	const SOCKET GetSocketfd() const
-	{
-		return _sockfd;
-	}
-
-	char* RecvBuf()
-	{
-		return _szRecv;
-	}
-
-	char* MsgBuf()
-	{
-		return _szMsgBuf;
-	}
-
-	const int GetLastPos() const
-	{
-		return _lastPos;
-	}
-
-	void SetLastPos(const int pos)
-	{
-		_lastPos = pos;
-	}
-
-	int SendData(const char* data, int length)
-	{
-		if (data == NULL)
-		{
-			return SOCKET_ERROR;
-		}
-
-		int ret = SOCKET_ERROR;
-		while (_lastSendPos + length >= SEND_BUFF_SIZE)
-		{
-			const int nCpyLen = SEND_BUFF_SIZE - _lastSendPos;
-			memcpy_s(_szSendMsgBuf + _lastSendPos, sizeof(_szSendMsgBuf) - _lastSendPos, data, nCpyLen);
-			data += nCpyLen;
-			length -= nCpyLen;
-			_lastSendPos = 0;
-
-			ret = send(_sockfd, data, length, 0);
-			if (SOCKET_ERROR == ret)
-			{
-				return ret;
-			}
-		}
-
-		if (length > 0)
-		{
-			memcpy_s(_szSendMsgBuf + _lastSendPos, sizeof(_szSendMsgBuf) - _lastSendPos, data, length);
-			_lastSendPos += length;
-		}
-
-		return ret;
-	}
-private:
-	SOCKET _sockfd; // socket fd_set file desc set
-	// 接收缓冲区
-	char _szRecv[RECV_BUFF_SIZE] = {};
-	// 消息接收缓冲区
-	char _szMsgBuf[RECV_BUFF_SIZE] = {};
-
-	int _lastPos = 0;
-
-	// 消息发送缓冲区
-	char _szSendMsgBuf[SEND_BUFF_SIZE] = {};
-
-	int _lastSendPos = 0;
-};
-#pragma endregion
-
-#pragma region INetEvent
-// 事件处理
-class INetEvent
-{
-public:
-	INetEvent()
-	{
-	}
-	virtual ~INetEvent()
-	{
-	}
-
-	// 客户端加入事件
-	virtual void OnJoin(ClientSocket* client) = 0;
-	// 客户端离开事件
-	virtual void OnLeave(ClientSocket* client) = 0;
-	// 客户端消息时间
-	virtual void OnNetMsg(ClientSocket* client, DataHeader* header) = 0;
-
-private:
-
-};
-#pragma endregion
+#include "ServerDefs.h"
+#include "CELLServer.h"
+#include "CELLClient.h"
+#include "INetEvent.h"
 
 #pragma region CellSendMsgTask
 class CellSendMsgTask : public CellTask
 {
 public:
-	CellSendMsgTask(ClientSocket* client, DataHeader* header)
+	CellSendMsgTask(CellClient* client, DataHeader* header)
 	{
 		_client = client;
 		_header = header;
@@ -164,73 +31,8 @@ public:
 
 	void DoTask();
 private:
-	ClientSocket* _client;
+	CellClient* _client;
 	DataHeader* _header;
-};
-
-#pragma endregion
-
-#pragma region CellServer
-class CellServer
-{
-public:
-	CellServer(const SOCKET sock)
-	{
-		_sock = sock;
-		_netEvent = NULL;
-		_isFdReadChange = false;
-		FD_ZERO(&_clientFdRead);
-	}
-
-	~CellServer()
-	{
-		Close();
-		_sock = INVALID_SOCKET;
-	}
-
-	void Start();
-
-	// 处理网络消息
-	bool OnRun();
-	bool IsRun() { return _sock != INVALID_SOCKET; }
-
-	// 接受数据
-	int RecvData(ClientSocket* client);
-
-	// 响应网络消息
-	void OnNetMsg(ClientSocket* client, DataHeader* header);
-
-	// 关闭socket
-	void Close();
-
-	void AddClientBuff(ClientSocket* client);
-
-	void ClearClientBuff();
-
-	size_t GetClientSize();
-
-	void SetEventObj(INetEvent* event);
-
-	void AddSendTask(CellTask task);
-private:
-	CellServer() {}
-
-	void AddClientFromBuff();
-private:
-	SOCKET _sock;
-	std::map<SOCKET, ClientSocket*> _sock2Clients;
-	// 缓冲队列
-	std::vector<ClientSocket*> _clientBuff;
-
-	std::mutex _mutex;
-	std::thread _thread;
-	CELLTimestamp _tTime;
-	INetEvent* _netEvent;
-
-	fd_set _clientFdRead;
-	bool _isFdReadChange;
-
-	CellTaskServer _taskServer;
 };
 
 #pragma endregion
@@ -271,7 +73,7 @@ public:
 	void Close();
 
 	// 接受数据
-	// int RecvData(ClientSocket* client);
+	// int RecvData(CellClient* client);
 
 	// 处理网络消息
 	bool OnRun();
@@ -281,14 +83,14 @@ public:
 	// 响应网络消息
 	void Time4Msg();
 
-	virtual void OnJoin(ClientSocket* client);
+	virtual void OnJoin(CellClient* client);
 
-	virtual void OnLeave(ClientSocket* client);
+	virtual void OnLeave(CellClient* client);
 
-	virtual void OnNetMsg(ClientSocket* client, DataHeader* header);
+	virtual void OnNetMsg(CellClient* client, DataHeader* header);
 private:
 
-	void AddCellServer(ClientSocket* client);
+	void AddCellServer(CellClient* client);
 
 	CellServer* GetMinClientCellServer();
 private:

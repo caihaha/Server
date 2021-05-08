@@ -144,6 +144,7 @@ int main()
 	ClassB* b2 = ClassB::createObject(5,6);
 	ClassB::destroyObject(b2);
 	*/
+	/*
 	{
 		ClassA* B1 = new ClassA(0);
 		shared_ptr<ClassA> s0 = make_shared<ClassA>(5);
@@ -164,7 +165,12 @@ int main()
 	ClassA* a1 = new ClassA(5);
 	delete a1;
 	printf("----4----\n");
+	*/
+	int* a = new int;
+	delete a;
 
+	std::shared_ptr<int> b = std::make_shared<int>();
 
+	getchar();
 	return 0;
 }

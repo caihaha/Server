@@ -21,6 +21,9 @@
     <ClCompile Include="CELLTask.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="CELLServer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DataDef.hpp">
@@ -36,6 +39,18 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="CELLTask.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CELLServer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerDefs.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CELLClient.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="INetEvent.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

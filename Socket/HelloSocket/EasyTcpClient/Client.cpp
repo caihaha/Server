@@ -42,6 +42,17 @@ const int count = cCount / tCount;
 EasyTcpClient* client[cCount];
 std::atomic_int readyCount = 0;
 
+void RecvThread(int begin, int end)
+{
+	while (g_bRun)
+	{
+		for (int i = begin; i < end; ++i)
+		{
+			client[i]->OnRun();
+		}
+	}
+}
+
 void SendThread(const int id)
 {
 	printf("thread <%d> start\n", id);
@@ -75,6 +86,9 @@ void SendThread(const int id)
 		std::this_thread::sleep_for(t);
 	}
 
+	std::thread t1(RecvThread, begin, end);
+	t1.detach();
+
 	Login login[10];
 	for (int i = 0; i < 10; ++i)
 	{
@@ -88,11 +102,9 @@ void SendThread(const int id)
 		for (int i = begin; i < end; ++i)
 		{
 			client[i]->SendData((const char*)(&login), length);
-			/*if (!client[i]->OnRun())
-			{
-				continue;
-			}*/
 		}
+		// std::chrono::milliseconds t(10);
+		// std::this_thread::sleep_for(t);
 	}
 
 	for (int i = begin; i < end; ++i)

@@ -34,30 +34,30 @@ public:
 	{
 	}
 
-	void OnJoin(ClientSocket* client);
+	void OnJoin(CellClient* client);
 
-	void OnLeave(ClientSocket* client);
+	void OnLeave(CellClient* client);
 
-	void OnNetMsg(ClientSocket* client, DataHeader* header);
+	void OnNetMsg(CellClient* client, DataHeader* header);
 
 private:
 
 };
 
-void MyServer::OnJoin(ClientSocket* client)
+void MyServer::OnJoin(CellClient* client)
 {
 	EasyTcpServer::OnJoin(client);
 	printf("client join, socket %d\n", client->GetSocketfd());
 }
 
 
-void MyServer::OnLeave(ClientSocket* client)
+void MyServer::OnLeave(CellClient* client)
 {
 	EasyTcpServer::OnLeave(client);
 	printf("client leave, socket %d\n", client->GetSocketfd());
 }
 
-void MyServer::OnNetMsg(ClientSocket* client, DataHeader* header)
+void MyServer::OnNetMsg(CellClient* client, DataHeader* header)
 {
 	EasyTcpServer::OnNetMsg(client, header);
 
