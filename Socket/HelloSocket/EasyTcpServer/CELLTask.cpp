@@ -36,7 +36,7 @@ void CellTaskServer::OnRun()
     }
 }
 
-void CellTaskServer::Stop()
+void CellTaskServer::Close()
 {
 
 }

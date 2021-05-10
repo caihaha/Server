@@ -157,11 +157,11 @@ void EasyTcpServer::Close()
 	close(_sock);
 #endif
 
-	//for (auto &iter : _cellServers)
-	//{
-	//	delete iter;
-	//}
-	//_cellServers.clear();
+	for (auto &iter : _cellServers)
+	{
+		delete iter;
+	}
+	_cellServers.clear();
 }
 
 void EasyTcpServer::Time4Msg()

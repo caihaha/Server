@@ -21,6 +21,20 @@ public:
 		_dtHeart = 0;
 	}
 
+	~CellClient()
+	{
+		if (_sockfd == INVALID_SOCKET)
+		{
+			return;
+		}
+
+#ifdef _WIN32
+		closesocket(_sockfd);
+#else
+		close(_sockfd);
+#endif
+	}
+
 	const SOCKET GetSocketfd() const
 	{
 		return _sockfd;

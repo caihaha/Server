@@ -24,7 +24,7 @@ public:
 
 	void AddTaskToBuf(CellTask task);
 
-	void Stop();
+	void Close();
 
 private:
 	void OnRun();

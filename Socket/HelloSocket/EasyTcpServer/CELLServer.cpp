@@ -190,7 +190,6 @@ void CellServer::Close()
 #ifdef _WIN32
 	for (auto iter = _sock2Clients.rbegin(); iter != _sock2Clients.rend(); ++iter)
 	{
-		closesocket(iter->first);
 		delete iter->second;
 	}
 	// ¹Ø±ÕÌ×½Ó×Öclosesocket;
@@ -198,13 +197,14 @@ void CellServer::Close()
 #else
 	for (auto iter = _sock2Clients.rbegin(); iter != _sock2Clients.rend(); ++iter)
 	{
-		close(iter->first);
 		delete iter->second;
 	}
 	close(_sock);
 #endif
 	_sock2Clients.clear();
 	_clientBuff.clear();
+
+	_taskServer.Close();
 }
 
 size_t CellServer::GetClientSize()
