@@ -66,7 +66,7 @@ public:
 
 	virtual void OnLeave(CellClient* client);
 
-	virtual void OnNetMsg(CellClient* client, DataHeader* header);
+	virtual void OnNetMsg(CellClient* client, DataHeader* header, CellServer* cellServer);
 private:
 
 	void AddCellServer(CellClient* client);

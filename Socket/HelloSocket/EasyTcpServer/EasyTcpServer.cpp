@@ -156,6 +156,12 @@ void EasyTcpServer::Close()
 #else
 	close(_sock);
 #endif
+
+	//for (auto &iter : _cellServers)
+	//{
+	//	delete iter;
+	//}
+	//_cellServers.clear();
 }
 
 void EasyTcpServer::Time4Msg()
@@ -224,7 +230,7 @@ void EasyTcpServer::OnLeave(CellClient* client)
 	--_clientCount;
 }
 
-void EasyTcpServer::OnNetMsg(CellClient* client, DataHeader* header)
+void EasyTcpServer::OnNetMsg(CellClient* client, DataHeader* header, CellServer* cellServer)
 {
 	++_msgCount;
 }

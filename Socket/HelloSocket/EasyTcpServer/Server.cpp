@@ -38,7 +38,7 @@ public:
 
 	void OnLeave(CellClient* client);
 
-	void OnNetMsg(CellClient* client, DataHeader* header);
+	void OnNetMsg(CellClient* client, DataHeader* header, CellServer* cellServer);
 
 private:
 
@@ -57,9 +57,9 @@ void MyServer::OnLeave(CellClient* client)
 	printf("client leave, socket %d\n", client->GetSocketfd());
 }
 
-void MyServer::OnNetMsg(CellClient* client, DataHeader* header)
+void MyServer::OnNetMsg(CellClient* client, DataHeader* header, CellServer* cellServer)
 {
-	EasyTcpServer::OnNetMsg(client, header);
+	EasyTcpServer::OnNetMsg(client, header, cellServer);
 
 	SOCKET sock = client->GetSocketfd();
 	switch (header->cmd)
@@ -68,12 +68,20 @@ void MyServer::OnNetMsg(CellClient* client, DataHeader* header)
 	{
 		LoginResult inRet;
 		client->SendData((const char*)&inRet, inRet.dataLength);
+
+		//LoginResult *inRet = new LoginResult();
+		//cellServer->AddSendTask(client, inRet);
 		break;
 	}
 	case CMD_LOGOUT:
 	{
 		LogoutResult outRet;
 		client->SendData((const char*)&outRet, outRet.dataLength);
+		break;
+	}
+	case CMD_HEART:
+	{
+		client->ResetDTHeart();
 		break;
 	}
 	default:

@@ -20,6 +20,8 @@ public:
 		_netEvent = NULL;
 		_isFdReadChange = false;
 		FD_ZERO(&_clientFdRead);
+
+		_oldTime = 0;
 	}
 
 	~CellServer()
@@ -56,6 +58,10 @@ private:
 	CellServer() {}
 
 	void AddClientFromBuff();
+
+	void ReadData(fd_set fdRead);
+
+	void CheckTime();
 private:
 	SOCKET _sock;
 	std::map<SOCKET, CellClient*> _sock2Clients;
@@ -71,6 +77,7 @@ private:
 	bool _isFdReadChange;
 
 	CellTaskServer _taskServer;
+	time_t _oldTime;
 };
 
 #pragma endregion

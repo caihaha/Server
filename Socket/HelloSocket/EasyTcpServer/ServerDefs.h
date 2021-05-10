@@ -27,7 +27,12 @@
 #endif // !RECV_BUFF_SIZE
 
 #ifndef SEND_BUFF_SIZE
-#define SEND_BUFF_SIZE 512
+#define SEND_BUFF_SIZE 1024
 #endif // !SEND_BUFF_SIZE
+
+// ¿Í»§¶ËÐÄÌø¼ì²â(ºÁÃë)
+#ifndef CLIENT_HEART_DEAD_TIME
+#define CLIENT_HEART_DEAD_TIME 5000
+#endif // !CLIENT_HEART_DEAD_TIME
 
 #endif // !_SERVER_DEFS_H_

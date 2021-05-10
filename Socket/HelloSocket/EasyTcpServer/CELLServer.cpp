@@ -5,6 +5,7 @@ void CellServer::Start()
 {
 	_thread = std::thread(std::mem_fn(&CellServer::OnRun), this);
 	_taskServer.Start();
+	_oldTime = CELLTime::GetNowInMilliSec();
 }
 
 bool CellServer::OnRun()
@@ -45,62 +46,91 @@ bool CellServer::OnRun()
 			memcpy_s(&fdRead, (size_t)sizeof(fd_set), &_clientFdRead, (size_t)sizeof(_clientFdRead));
 		}
 
-		// timeval t = { 0, 0 };
+		timeval t = { 0, 1 };
 		// 第一个参数nfds是一个整数值，指fd_set集合中所有描述符(socket)的范围(即最大socket+1)
 		// windows中不需要
-		int ret = select(maxSock + 1, &fdRead, NULL, NULL, NULL);
+		int ret = select(maxSock + 1, &fdRead, NULL, NULL, &t);
 		if (ret < 0)
 		{
 			printf("select exit\n");
 			Close();
 			return false;
 		}
-		else if (ret == 0)
-		{
-			continue;
-		}
 
-#ifdef _WIN32
-		for (int i = 0; i < fdRead.fd_count; ++i)
-		{
-			auto iter = _sock2Clients.find(fdRead.fd_array[i]);
-			if (iter != _sock2Clients.end())
-			{
-				if (-1 == RecvData(iter->second))
-				{
-					_isFdReadChange = true;
-
-					if (_netEvent)
-					{
-						_netEvent->OnLeave(iter->second);
-					}
-					delete iter->second;
-					_sock2Clients.erase(iter->first);
-				}
-			}
-		}
-#else
-		for (auto iter = _sock2Clients.rbegin(); iter != _sock2Clients.rend(); ++iter)
-		{
-			if (FD_ISSET(iter->first, &fdRead))
-			{
-				if (-1 == RecvData(iter->second))
-				{
-					_isFdReadChange = true;
-
-					if (_netEvent)
-					{
-						_netEvent->OnLeave(iter->second);
-					}
-					delete iter->second;
-					_sock2Clients.erase(iter->first);
-				}
-			}
-		}
-#endif // _WIN32
+		ReadData(fdRead);
 	}
-
 	return true;
+}
+
+void CellServer::ReadData(fd_set fdRead)
+{
+#ifdef _WIN32
+	for (int i = 0; i < fdRead.fd_count; ++i)
+	{
+		auto iter = _sock2Clients.find(fdRead.fd_array[i]);
+		if (iter != _sock2Clients.end())
+		{
+			if (-1 == RecvData(iter->second))
+			{
+				_isFdReadChange = true;
+
+				if (_netEvent)
+				{
+					_netEvent->OnLeave(iter->second);
+				}
+				delete iter->second;
+				_sock2Clients.erase(iter);
+			}
+		}
+	}
+#else
+	for (auto iter = _sock2Clients.begin(); iter != _sock2Clients.end(); ++iter)
+	{
+		if (FD_ISSET(iter->first, &fdRead))
+		{
+			if (-1 == RecvData(iter->second))
+			{
+				_isFdReadChange = true;
+
+				if (_netEvent)
+				{
+					_netEvent->OnLeave(iter->second);
+				}
+				delete iter->second;
+				_sock2Clients.erase(iter++);
+			}
+			else
+			{
+				++iter;
+			}
+		}
+	}
+#endif // _WIN32
+}
+
+void CellServer::CheckTime()
+{
+	time_t nowTime = CELLTime::GetNowInMilliSec();
+	time_t deltaTime = nowTime - _oldTime;
+	_oldTime = nowTime;
+	for (auto iter = _sock2Clients.begin(); iter != _sock2Clients.end();)
+	{
+		if (iter->second->CheckHeart(deltaTime))
+		{
+			_isFdReadChange = true;
+
+			if (_netEvent)
+			{
+				_netEvent->OnLeave(iter->second);
+			}
+			delete iter->second;
+			_sock2Clients.erase(iter++);
+		}
+		else
+		{
+			++iter;
+		}
+	}
 }
 
 int CellServer::RecvData(CellClient* client)
@@ -128,14 +158,8 @@ int CellServer::RecvData(CellClient* client)
 			// 剩余消息缓冲区长度
 			int size = lastPos - header->dataLength;
 			OnNetMsg(client, header);
-			if (size > 0)
-			{
-				memcpy(msgBuf, msgBuf + header->dataLength, size);
-			}
-			else
-			{
-				memcpy(msgBuf, msgBuf + header->dataLength, 1);
-			}
+			memcpy(msgBuf, msgBuf + header->dataLength, size);
+
 			lastPos = size;
 		}
 		else
@@ -153,7 +177,7 @@ void CellServer::OnNetMsg(CellClient* client, DataHeader* header)
 {
 	// 6 处理请求
 	// send 向客户端发送数据
-	_netEvent->OnNetMsg(client, header);
+	_netEvent->OnNetMsg(client, header, this);
 }
 
 void CellServer::Close()

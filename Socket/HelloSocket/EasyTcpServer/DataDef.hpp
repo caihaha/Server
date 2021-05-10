@@ -5,6 +5,7 @@ enum CMD
 	CMD_LOGOUT,
 	CMD_LOGOUT_RESULT,
 	CMD_NEW_USER_JOIN,
+	CMD_HEART,
 	CMD_ERROR,
 };
 
@@ -57,6 +58,15 @@ struct LogoutResult : public DataHeader
 		result = 0;
 	}
 	int result;
+};
+
+struct Heart : public DataHeader
+{
+	Heart()
+	{
+		dataLength = sizeof(Heart);
+		cmd = CMD_HEART;
+	}
 };
 
 struct Error : public DataHeader

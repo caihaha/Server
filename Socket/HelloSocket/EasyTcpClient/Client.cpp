@@ -75,7 +75,9 @@ void SendThread(const int id)
 		client[i]->InitSocket();
 		client[i]->Connect("127.0.0.1", 4567);
 	}
-
+	// 心跳检测：死亡计时，客户端每隔一段时间要向服务端发送一条消息
+	// 
+	// 
 	printf("thread <%d> , begin : %d, end : %d\n",id, begin, end);
 
 	// 等待所有线程都准备好
@@ -89,8 +91,8 @@ void SendThread(const int id)
 	std::thread t1(RecvThread, begin, end);
 	t1.detach();
 
-	Login login[10];
-	for (int i = 0; i < 10; ++i)
+	Login login[1];
+	for (int i = 0; i < 1; ++i)
 	{
 		strcpy_s(login[i].userName, "CJC");
 		strcpy_s(login[i].PassWord, "123456");

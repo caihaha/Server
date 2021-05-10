@@ -17,6 +17,8 @@ public:
 
 		memset(_szSendMsgBuf, 0, sizeof(_szSendMsgBuf));
 		_lastSendPos = 0;
+
+		_dtHeart = 0;
 	}
 
 	const SOCKET GetSocketfd() const
@@ -55,7 +57,7 @@ public:
 		while (_lastSendPos + length >= SEND_BUFF_SIZE)
 		{
 			const int nCpyLen = SEND_BUFF_SIZE - _lastSendPos;
-			memcpy(_szSendMsgBuf + _lastSendPos, data, nCpyLen);
+			memmove(_szSendMsgBuf + _lastSendPos, data, nCpyLen);
 			data += nCpyLen;
 			length -= nCpyLen;
 			_lastSendPos = 0;
@@ -63,25 +65,35 @@ public:
 			ret = send(_sockfd, _szSendMsgBuf, SEND_BUFF_SIZE, 0);
 			if (SOCKET_ERROR == ret)
 			{
-				return ret;
+				break;
 			}
 		}
 
 		if (length > 0)
 		{
-			memcpy(_szSendMsgBuf + _lastSendPos, data, length);
+			memmove(_szSendMsgBuf + _lastSendPos, data, length);
 			_lastSendPos += length;
-			int i = 0;
 		}
 		// ret = send(_sockfd, data, length, 0);
 		return ret;
+	}
+
+	void ResetDTHeart()
+	{
+		_dtHeart = 0;
+	}
+
+	bool CheckHeart(time_t dt)
+	{
+		_dtHeart += dt;
+		return _dtHeart >= CLIENT_HEART_DEAD_TIME;
 	}
 private:
 	SOCKET _sockfd; // socket fd_set file desc set
 	// 接收缓冲区
 	char _szRecv[RECV_BUFF_SIZE] = {};
 	// 消息接收缓冲区
-	char _szMsgBuf[RECV_BUFF_SIZE] = {};
+	char _szMsgBuf[RECV_BUFF_SIZE * 2] = {};
 
 	int _lastPos = 0;
 
@@ -89,6 +101,8 @@ private:
 	char _szSendMsgBuf[SEND_BUFF_SIZE] = {};
 
 	int _lastSendPos = 0;
+	// 心跳检测
+	time_t _dtHeart;
 };
 #pragma endregion
 
