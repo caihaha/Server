@@ -109,6 +109,7 @@ int main()
 		server.OnRun();
 	}
 
+	server.Close();
 	printf("server exit");
 	getchar();
 	return 0;
