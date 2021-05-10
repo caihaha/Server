@@ -7,30 +7,11 @@
 #include <list>
 #include <functional>
 
-#pragma region 任务基类
-class CellTask
-{
-public:
-	CellTask()
-	{
-	}
-	virtual ~CellTask()
-	{
-	}
-
-	virtual void DoTask()
-	{
-
-	}
-private:
-
-};
-
-#pragma endregion
 
 #pragma region 执行任务类
 class CellTaskServer
 {
+	typedef std::function<void()> CellTask;
 public:
 	CellTaskServer()
 	{
@@ -41,7 +22,7 @@ public:
 
 	void Start();
 
-	void AddTaskToBuf(CellTask* task);
+	void AddTaskToBuf(CellTask task);
 
 	void Stop();
 
@@ -52,9 +33,9 @@ private:
 
 private:
 	// 任务数据
-	std::list<CellTask*> _taskList;
+	std::list<CellTask> _taskList;
 	// 任务数据缓冲区
-	std::list<CellTask*> _taskListBuf;
+	std::list<CellTask> _taskListBuf;
 	// 数据缓冲区锁
 	std::mutex _mutex;
 

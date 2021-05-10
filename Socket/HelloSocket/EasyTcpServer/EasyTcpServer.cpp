@@ -230,27 +230,4 @@ void EasyTcpServer::OnNetMsg(CellClient* client, DataHeader* header)
 }
 #pragma endregion
 
-#pragma region CellSendMsgTask
-void CellSendMsgTask::DoTask()
-{
-	if (_header == nullptr)
-	{
-		return;
-	}
-
-	switch (_header->cmd)
-	{
-	case CMD_LOGIN :
-		_client->SendData((const char*)((Login*)_header), _header->dataLength);
-		break;
-	case CMD_LOGOUT:
-		_client->SendData((const char*)((Logout*)_header), _header->dataLength);
-		break;
-	default:
-		break;
-	}
-
-	delete _header;
-}
-#pragma endregion
 

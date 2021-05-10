@@ -7,7 +7,7 @@ void CellTaskServer::Start()
     t.detach();
 }
 
-void CellTaskServer::AddTaskToBuf(CellTask *task)
+void CellTaskServer::AddTaskToBuf(CellTask task)
 {
     std::lock_guard<std::mutex> lock(_mutex);
     _taskListBuf.push_back(task);
@@ -29,8 +29,7 @@ void CellTaskServer::OnRun()
         // 处理任务
         for (auto& task : _taskList)
         {
-            task->DoTask();
-            delete task;
+            task();
         }
 
         _taskList.clear();

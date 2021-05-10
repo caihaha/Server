@@ -16,27 +16,6 @@
 #include "CELLClient.h"
 #include "INetEvent.h"
 
-#pragma region CellSendMsgTask
-class CellSendMsgTask : public CellTask
-{
-public:
-	CellSendMsgTask(CellClient* client, DataHeader* header)
-	{
-		_client = client;
-		_header = header;
-	}
-	virtual ~CellSendMsgTask()
-	{
-	}
-
-	void DoTask();
-private:
-	CellClient* _client;
-	DataHeader* _header;
-};
-
-#pragma endregion
-
 #pragma region EasyTcpServer
 class EasyTcpServer : public INetEvent
 {

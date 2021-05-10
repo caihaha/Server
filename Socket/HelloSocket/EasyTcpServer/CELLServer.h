@@ -51,7 +51,7 @@ public:
 
 	void SetEventObj(INetEvent* event);
 
-	void AddSendTask(CellTask task);
+	void AddSendTask(CellClient* client, DataHeader* header);
 private:
 	CellServer() {}
 

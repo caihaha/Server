@@ -221,9 +221,28 @@ void CellServer::AddClientFromBuff()
 	_isFdReadChange = true;
 }
 
-void CellServer::AddSendTask(CellTask task)
+void CellServer::AddSendTask(CellClient* client, DataHeader *header)
 {
-	_taskServer.AddTaskToBuf(&task);
+	if (header == nullptr)
+	{
+		return;
+	}
+
+	_taskServer.AddTaskToBuf([client, header]() {
+		switch (header->cmd)
+		{
+		case CMD_LOGIN:
+			client->SendData((const char*)((Login*)header), header->dataLength);
+			break;
+		case CMD_LOGOUT:
+			client->SendData((const char*)((Logout*)header), header->dataLength);
+			break;
+		default:
+			break;
+		}
+
+		delete header; 
+		});
 }
 
 #pragma endregion

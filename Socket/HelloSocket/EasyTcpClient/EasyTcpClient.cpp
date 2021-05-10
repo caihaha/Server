@@ -157,11 +157,6 @@ int EasyTcpClient::RecvData()
 		}
 	}
 
-	if (_lastPos > 0)
-	{
-
-	}
-
 	return 0;
 }
 
