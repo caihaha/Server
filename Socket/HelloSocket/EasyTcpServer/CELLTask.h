@@ -7,6 +7,7 @@
 #include <list>
 #include <functional>
 
+#include "CELLThread.h"
 
 #pragma region 执行任务类
 class CellTaskServer
@@ -27,7 +28,7 @@ public:
 	void Close();
 
 private:
-	void OnRun();
+	void OnRun(CELLThread* t);
 
 	void AddTaskFromBuf();
 
@@ -39,6 +40,7 @@ private:
 	// 数据缓冲区锁
 	std::mutex _mutex;
 
+	CELLThread _thread;
 };
 #pragma endregion
 

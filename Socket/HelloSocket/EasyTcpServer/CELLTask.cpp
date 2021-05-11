@@ -3,8 +3,9 @@
 #pragma region CellTaskServer
 void CellTaskServer::Start()
 {
-    std::thread t(std::mem_fn(&CellTaskServer::OnRun), this);
-    t.detach();
+    _thread.Start(  NULL,
+                    [this](CELLThread* t) {OnRun(t); },
+                    NULL);
 }
 
 void CellTaskServer::AddTaskToBuf(CellTask task)
@@ -13,9 +14,9 @@ void CellTaskServer::AddTaskToBuf(CellTask task)
     _taskListBuf.push_back(task);
 }
 
-void CellTaskServer::OnRun()
+void CellTaskServer::OnRun(CELLThread* t)
 {
-    while (true)
+    while (t->IsRun())
     {
         AddTaskFromBuf();
 
@@ -38,7 +39,7 @@ void CellTaskServer::OnRun()
 
 void CellTaskServer::Close()
 {
-
+    _thread.Close();
 }
 
 void CellTaskServer::AddTaskFromBuf()

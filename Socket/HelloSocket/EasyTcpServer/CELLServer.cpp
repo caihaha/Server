@@ -3,15 +3,17 @@
 #pragma region CellServer
 void CellServer::Start()
 {
-	_thread = std::thread(std::mem_fn(&CellServer::OnRun), this);
+	_thread.Start(NULL,
+				  [this](CELLThread* t) {OnRun(t); },
+				  NULL);
 	_taskServer.Start();
 	_oldTime = CELLTime::GetNowInMilliSec();
 }
 
-bool CellServer::OnRun()
+bool CellServer::OnRun(CELLThread* thr)
 {
 	_isFdReadChange = true;
-	while (IsRun())
+	while (thr->IsRun())
 	{
 		AddClientFromBuff();
 
@@ -53,7 +55,7 @@ bool CellServer::OnRun()
 		if (ret < 0)
 		{
 			printf("select exit\n");
-			Close();
+			thr->Exit();
 			return false;
 		}
 

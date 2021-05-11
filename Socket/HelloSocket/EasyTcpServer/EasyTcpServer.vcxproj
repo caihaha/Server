@@ -153,8 +153,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CELLClient.h" />
+    <ClInclude Include="CELLSemaphore.h" />
     <ClInclude Include="CELLServer.h" />
     <ClInclude Include="CELLTask.h" />
+    <ClInclude Include="CELLThread.h" />
     <ClInclude Include="CELLTimestamp.hpp" />
     <ClInclude Include="DataDef.hpp" />
     <ClInclude Include="EasyTcpServer.h" />

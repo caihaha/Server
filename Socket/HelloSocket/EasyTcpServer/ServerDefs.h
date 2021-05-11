@@ -21,6 +21,8 @@
 #include "DataDef.hpp"
 #include "CELLTimestamp.hpp"
 #include "CELLTask.h"
+#include "CELLThread.h"
+#include "CELLSemaphore.h"
 
 #ifndef RECV_BUFF_SIZE
 #define RECV_BUFF_SIZE 10240

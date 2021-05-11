@@ -32,9 +32,7 @@ public:
 
 	void Start();
 
-	// 处理网络消息
-	bool OnRun();
-	bool IsRun() { return _sock != INVALID_SOCKET; }
+
 
 	// 接受数据
 	int RecvData(CellClient* client);
@@ -57,6 +55,10 @@ public:
 private:
 	CellServer() {}
 
+	// 处理网络消息
+	bool OnRun(CELLThread* thr);
+	bool IsRun() { return _sock != INVALID_SOCKET; }
+
 	void AddClientFromBuff();
 
 	void ReadData(fd_set fdRead);
@@ -69,7 +71,6 @@ private:
 	std::vector<CellClient*> _clientBuff;
 
 	std::mutex _mutex;
-	std::thread _thread;
 	CELLTimestamp _tTime;
 	INetEvent* _netEvent;
 
@@ -78,6 +79,8 @@ private:
 
 	CellTaskServer _taskServer;
 	time_t _oldTime;
+
+	CELLThread _thread;
 };
 
 #pragma endregion
