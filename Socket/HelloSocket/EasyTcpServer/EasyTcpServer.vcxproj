@@ -153,6 +153,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CELLClient.h" />
+    <ClInclude Include="CELLLog.h" />
     <ClInclude Include="CELLSemaphore.h" />
     <ClInclude Include="CELLServer.h" />
     <ClInclude Include="CELLTask.h" />
