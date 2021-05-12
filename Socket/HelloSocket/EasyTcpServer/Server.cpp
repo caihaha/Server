@@ -2,9 +2,6 @@
 
 #include "EasyTcpServer.cpp"
 
-class EasyTcpServer;
-class CellServer;
-
 bool g_bRun = true;
 
 void CmdThread()

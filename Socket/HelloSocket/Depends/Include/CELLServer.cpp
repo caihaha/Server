@@ -67,7 +67,7 @@ bool CellServer::OnRun(CELLThread* thr)
 void CellServer::ReadData(fd_set fdRead)
 {
 #ifdef _WIN32
-	for (int i = 0; i < fdRead.fd_count; ++i)
+	for (int i = 0; i < (int)fdRead.fd_count; ++i)
 	{
 		auto iter = _sock2Clients.find(fdRead.fd_array[i]);
 		if (iter != _sock2Clients.end())
