@@ -18,49 +18,5 @@
     <ClCompile Include="Server.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="CELLTask.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="CELLServer.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="DataDef.hpp">
-      <Filter>源文件</Filter>
-    </ClInclude>
-    <ClInclude Include="EasyTcpServer.cpp">
-      <Filter>源文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CELLTimestamp.hpp">
-      <Filter>源文件</Filter>
-    </ClInclude>
-    <ClInclude Include="EasyTcpServer.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CELLTask.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CELLServer.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ServerDefs.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CELLClient.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="INetEvent.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CELLSemaphore.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CELLThread.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CELLLog.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

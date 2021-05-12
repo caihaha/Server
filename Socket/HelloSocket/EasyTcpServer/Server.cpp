@@ -1,7 +1,9 @@
 #pragma once
 
-#include "EasyTcpServer.h"
 #include "EasyTcpServer.cpp"
+
+class EasyTcpServer;
+class CellServer;
 
 bool g_bRun = true;
 

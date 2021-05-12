@@ -19,18 +19,4 @@
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="EasyTcpClient.cpp">
-      <Filter>源文件</Filter>
-    </ClInclude>
-    <ClInclude Include="DataDef.hpp">
-      <Filter>源文件</Filter>
-    </ClInclude>
-    <ClInclude Include="EasyTcpClient.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CELLTimestamp.hpp">
-      <Filter>源文件</Filter>
-    </ClInclude>
-  </ItemGroup>
 </Project>

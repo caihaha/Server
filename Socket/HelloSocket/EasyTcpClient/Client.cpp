@@ -1,6 +1,6 @@
-#include "EasyTcpClient.h"
-#include "EasyTcpClient.cpp"
 #pragma once
+
+#include "EasyTcpClient.cpp"
 
 int g_bRun = true;
 void CmdThread()
